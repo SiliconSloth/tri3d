@@ -4,8 +4,13 @@
 #include <stdbool.h>
 #include <libdragon.h>
 
+#define TV_TYPE_LOC (*((volatile uint32_t *)0x80000300))
 #define DPC_STATUS_REG (*((volatile uint32_t *)0xA410000C))
 #define SP_DMEM ((volatile uint32_t *) 0xA4000000)
+
+#define TV_TYPE_PAL 0
+#define TV_TYPE_NTSC 1
+#define TV_TYPE_MPAL 2
 
 #define SET_XBS 2
 
@@ -26,6 +31,10 @@ void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 	graphics_draw_text(disp, x, y, szBuffer);
 }
 
+void set_tv_type(uint32_t tv_type) {
+	TV_TYPE_LOC = tv_type;
+}
+
 void set_xbus() {
 	DPC_STATUS_REG |= SET_XBS;
 }
@@ -35,6 +44,7 @@ int main(void){
 
 	init_interrupts();
 
+	set_tv_type(TV_TYPE_PAL);
 	display_init(RESOLUTION_320x240, DEPTH_16_BPP, 2, GAMMA_NONE, ANTIALIAS_RESAMPLE);
 	controller_init();
 	rsp_init();
@@ -58,6 +68,7 @@ int main(void){
 		set_xbus();
 		run_ucode();
 		graphics_printf(disp, 200, 20, "%lX", __safe_buffer[disp-1]);
+		graphics_printf(disp, 200, 30, "%lX", TV_TYPE_LOC);
 		display_show(disp);
 	}
 }
