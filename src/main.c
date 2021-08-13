@@ -36,7 +36,7 @@ void set_tv_type(uint32_t tv_type) {
 }
 
 void set_xbus() {
-	DPC_STATUS_REG |= SET_XBS;
+	DPC_STATUS_REG = SET_XBS;
 }
 
 int main(void){
