@@ -20,6 +20,27 @@ extern const void tri3d_ucode_end;
 
 extern void *__safe_buffer[];
 
+typedef int32_t fixed32;
+
+#define FIXED32(v) ((fixed32) (v * 65536))
+
+typedef struct {
+    bool major;
+
+	fixed32 yl;
+	fixed32 ym;
+	fixed32 yh;
+
+	fixed32 xl;
+	fixed32 dxldy;
+
+	fixed32 xh;
+	fixed32 dxhdy;
+
+	fixed32 xm;
+	fixed32 dxmdy;
+} TriangleCoeffs;
+
 void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 	char szBuffer[64];
 
@@ -39,6 +60,20 @@ void set_xbus() {
 	DPC_STATUS_REG = SET_XBS;
 }
 
+void load_triangle(TriangleCoeffs coeffs) {
+	SP_DMEM[18] = 0x8000000 | (coeffs.major << 23) | (coeffs.yl >> 14);
+	SP_DMEM[19] = ((coeffs.ym & 0x7FFC000) << 2) | (coeffs.yh >> 14);
+
+	SP_DMEM[20] = coeffs.xl;
+	SP_DMEM[21] = coeffs.dxldy;
+
+	SP_DMEM[22] = coeffs.xh;
+	SP_DMEM[23] = coeffs.dxhdy;
+
+	SP_DMEM[24] = coeffs.xm;
+	SP_DMEM[25] = coeffs.dxmdy;
+}
+
 int main(void){
 	static display_context_t disp = 0;
 
@@ -55,20 +90,24 @@ int main(void){
     load_ucode((void*)&tri3d_ucode_start, ucode_code_size);
     load_data((void*)&tri3d_ucode_data_start, ucode_data_size);
 
+	TriangleCoeffs coeffs = {1, FIXED32(192), FIXED32(100), FIXED32(60),
+								FIXED32(240), FIXED32(-1.375),
+								FIXED32(180), FIXED32(-0.5),
+								FIXED32(180), FIXED32(1.5)};
+
 	while (1) {
 		while(!(disp = display_lock()));
 
 		SP_DMEM[5] = (uint32_t) __safe_buffer[disp-1];
 
-		SP_DMEM[20] -= 0x10000;
-		SP_DMEM[22] -= 0x10000;
-		SP_DMEM[24] -= 0x10000;
+		load_triangle(coeffs);
 
 		rdp_sync(SYNC_PIPE);
 		set_xbus();
 		run_ucode();
 		graphics_printf(disp, 200, 20, "%lX", __safe_buffer[disp-1]);
-		graphics_printf(disp, 200, 30, "%lX", TV_TYPE_LOC);
+		graphics_printf(disp, 200, 30, "%lX", SP_DMEM[17]);
+		graphics_printf(disp, 200, 40, "%lX", SP_DMEM[18]);
 		display_show(disp);
 	}
 }
