@@ -191,7 +191,6 @@ int main(void){
 		load_rotated_triangle(t, 0);
 		load_rotated_triangle(t + 1.5, 1);
 
-		rdp_sync(SYNC_PIPE);
 		set_xbus();
 		run_ucode();
 		// graphics_printf(disp, 200, 20, "%f", (float) ((y2 == y1) ? 0 : DIV_FX32(x2 - x1, y2 - y1)) / 65536);

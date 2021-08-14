@@ -32,7 +32,6 @@ arch n64.rdp
   Set_Blend_Color $FCB195FF // Set Blend Color: RGBA
   Fill_Triangle 0,0,0, 0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
   Fill_Triangle 0,0,0, 0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
-  Sync_Full // Ensure Entire Scene Is Fully Drawn
 RDPBufferEnd:
 
 align(8)
