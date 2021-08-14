@@ -30,7 +30,7 @@ arch n64.rdp
 
   Sync_Pipe // Stall Pipeline, Until Preceeding Primitives Completely Finish
   Set_Blend_Color $FCB195FF // Set Blend Color: RGBA
-RDPTriangle1:
+  Fill_Triangle 0,0,0, 0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
   Fill_Triangle 0,0,0, 0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
   Sync_Full // Ensure Entire Scene Is Fully Drawn
 RDPBufferEnd:

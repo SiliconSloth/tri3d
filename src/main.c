@@ -63,18 +63,20 @@ void set_xbus() {
 	DPC_STATUS_REG = SET_XBS;
 }
 
-void load_triangle(TriangleCoeffs coeffs) {
-	SP_DMEM[18] = 0x8000000 | (coeffs.major << 23) | (coeffs.yl >> 14);
-	SP_DMEM[19] = ((coeffs.ym & 0x7FFC000) << 2) | (coeffs.yh >> 14);
+void load_triangle(TriangleCoeffs coeffs, uint32_t index) {
+	volatile uint32_t *command = SP_DMEM + 18 + index * 8;
 
-	SP_DMEM[20] = coeffs.xl;
-	SP_DMEM[21] = coeffs.dxldy;
+	command[0] = 0x8000000 | (coeffs.major << 23) | (coeffs.yl >> 14);
+	command[1] = ((coeffs.ym & 0x7FFC000) << 2) | (coeffs.yh >> 14);
 
-	SP_DMEM[22] = coeffs.xh;
-	SP_DMEM[23] = coeffs.dxhdy;
+	command[2] = coeffs.xl;
+	command[3] = coeffs.dxldy;
 
-	SP_DMEM[24] = coeffs.xm;
-	SP_DMEM[25] = coeffs.dxmdy;
+	command[4] = coeffs.xh;
+	command[5] = coeffs.dxhdy;
+
+	command[6] = coeffs.xm;
+	command[7] = coeffs.dxmdy;
 }
 
 void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y1, fixed32 x2, fixed32 y2, fixed32 x3, fixed32 y3) {
@@ -139,6 +141,28 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y
 	coeffs->dxmdy = dxmdy;
 }
 
+void load_rotated_triangle(float angle, uint32_t index) {
+	float xr1 = 20;
+	float yr1 = -60;
+	float xr2 = -46;
+	float yr2 = 72;
+	float xr3 = 80;
+	float yr3 = -20;
+
+	float x1 = xr1 * cosf(angle) - yr1 * sinf(angle) + 160;
+	float y1 = xr1 * sinf(angle) + yr1 * cosf(angle) + 120;
+
+	float x2 = xr2 * cosf(angle) - yr2 * sinf(angle) + 160;
+	float y2 = xr2 * sinf(angle) + yr2 * cosf(angle) + 120;
+
+	float x3 = xr3 * cosf(angle) - yr3 * sinf(angle) + 160;
+	float y3 = xr3 * sinf(angle) + yr3 * cosf(angle) + 120;
+
+	TriangleCoeffs coeffs;
+	compute_triangle_coefficients(&coeffs, FIXED32(x1), FIXED32(y1), FIXED32(x2), FIXED32(y2), FIXED32(x3), FIXED32(y3));
+	load_triangle(coeffs, index);
+}
+
 int main(void){
 	static display_context_t disp = 0;
 
@@ -155,16 +179,8 @@ int main(void){
     load_ucode((void*)&tri3d_ucode_start, ucode_code_size);
     load_data((void*)&tri3d_ucode_data_start, ucode_data_size);
 
-	float xr1 = 20;
-	float yr1 = -60;
-	float xr2 = -46;
-	float yr2 = 72;
-	float xr3 = 80;
-	float yr3 = -20;
-
 	float t = 1.102;
 
-	TriangleCoeffs coeffs;
 	while (1) {
 		while(!(disp = display_lock()));
 
@@ -172,22 +188,13 @@ int main(void){
 
 		t += 0.01;
 
-		float x1 = xr1 * cosf(t) - yr1 * sinf(t) + 160;
-		float y1 = xr1 * sinf(t) + yr1 * cosf(t) + 120;
-
-		float x2 = xr2 * cosf(t) - yr2 * sinf(t) + 160;
-		float y2 = xr2 * sinf(t) + yr2 * cosf(t) + 120;
-
-		float x3 = xr3 * cosf(t) - yr3 * sinf(t) + 160;
-		float y3 = xr3 * sinf(t) + yr3 * cosf(t) + 120;
-
-		compute_triangle_coefficients(&coeffs, FIXED32(x1), FIXED32(y1), FIXED32(x2), FIXED32(y2), FIXED32(x3), FIXED32(y3));
-		load_triangle(coeffs);
+		load_rotated_triangle(t, 0);
+		load_rotated_triangle(t + 1.5, 1);
 
 		rdp_sync(SYNC_PIPE);
 		set_xbus();
 		run_ucode();
-		graphics_printf(disp, 200, 20, "%f", (float) ((y2 == y1) ? 0 : DIV_FX32(x2 - x1, y2 - y1)) / 65536);
+		// graphics_printf(disp, 200, 20, "%f", (float) ((y2 == y1) ? 0 : DIV_FX32(x2 - x1, y2 - y1)) / 65536);
 		display_show(disp);
 	}
 }
