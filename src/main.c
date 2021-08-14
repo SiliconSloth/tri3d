@@ -152,6 +152,12 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y
 	coeffs->dxmdy = dxmdy;
 }
 
+void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 x2, fixed32 y2, fixed32 x3, fixed32 y3, uint32_t color) {
+	TriangleCoeffs coeffs;
+	compute_triangle_coefficients(&coeffs, x1, y1, x2, y2, x3, y3);
+	load_triangle(coeffs, color);
+}
+
 void load_rotated_triangle(float angle, uint32_t color) {
 	float xr1 = 20;
 	float yr1 = -60;
@@ -169,9 +175,7 @@ void load_rotated_triangle(float angle, uint32_t color) {
 	float x3 = xr3 * cosf(angle) - yr3 * sinf(angle) + 160;
 	float y3 = xr3 * sinf(angle) + yr3 * cosf(angle) + 120;
 
-	TriangleCoeffs coeffs;
-	compute_triangle_coefficients(&coeffs, FIXED32(x1), FIXED32(y1), FIXED32(x2), FIXED32(y2), FIXED32(x3), FIXED32(y3));
-	load_triangle(coeffs, color);
+	load_triangle_verts(FIXED32(x1), FIXED32(y1), FIXED32(x2), FIXED32(y2), FIXED32(x3), FIXED32(y3), color);
 }
 
 int main(void){
