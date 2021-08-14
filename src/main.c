@@ -158,24 +158,29 @@ void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 x2, fixed32 y2, fixed32
 	load_triangle(coeffs, color);
 }
 
-void load_rotated_triangle(float angle, uint32_t color) {
-	float xr1 = 20;
-	float yr1 = -60;
-	float xr2 = -46;
-	float yr2 = 72;
-	float xr3 = 80;
-	float yr3 = -20;
+void load_quad(float radius, float angle, uint32_t color) {
+	float xr1 = -20;
+	float yr1 = -20;
+	float xr2 = 20;
+	float yr2 = 20;
+
+	xr1 += radius;
+	xr2 += radius;
 
 	float x1 = xr1 * cosf(angle) - yr1 * sinf(angle) + 160;
 	float y1 = xr1 * sinf(angle) + yr1 * cosf(angle) + 120;
 
-	float x2 = xr2 * cosf(angle) - yr2 * sinf(angle) + 160;
-	float y2 = xr2 * sinf(angle) + yr2 * cosf(angle) + 120;
+	float x2 = xr2 * cosf(angle) - yr1 * sinf(angle) + 160;
+	float y2 = xr2 * sinf(angle) + yr1 * cosf(angle) + 120;
 
-	float x3 = xr3 * cosf(angle) - yr3 * sinf(angle) + 160;
-	float y3 = xr3 * sinf(angle) + yr3 * cosf(angle) + 120;
+	float x3 = xr2 * cosf(angle) - yr2 * sinf(angle) + 160;
+	float y3 = xr2 * sinf(angle) + yr2 * cosf(angle) + 120;
 
-	load_triangle_verts(FIXED32(x1), FIXED32(y1), FIXED32(x2), FIXED32(y2), FIXED32(x3), FIXED32(y3), color);
+	float x4 = xr1 * cosf(angle) - yr2 * sinf(angle) + 160;
+	float y4 = xr1 * sinf(angle) + yr2 * cosf(angle) + 120;
+
+	load_triangle_verts(FIXED32(x1), FIXED32(y1), FIXED32(x3), FIXED32(y3), FIXED32(x2), FIXED32(y2), color);
+	load_triangle_verts(FIXED32(x1), FIXED32(y1), FIXED32(x4), FIXED32(y4), FIXED32(x3), FIXED32(y3), color);
 }
 
 int main(void){
@@ -203,9 +208,14 @@ int main(void){
 
 		t += 0.01;
 
-		load_rotated_triangle(t, 0xF0F000FF);
-		load_rotated_triangle(t + 1.5, 0x00F0F0FF);
-		load_rotated_triangle(t + 2.4, 0xF000F0FF);
+		load_quad(100, t,           	   0xFF0000FF);
+		load_quad(100, t + M_PI_4,  	   0x00FF00FF);
+		load_quad(100, t + M_PI_2,  	   0x0000FFFF);
+		load_quad(100, t + M_3PI_4, 	   0xFFFF00FF);
+		load_quad(100, t + M_PI,    	   0xFF00FFFF);
+		load_quad(100, t + M_PI + M_PI_4,  0x00FFFFFF);
+		load_quad(100, t + M_PI + M_PI_2,  0xFF9900FF);
+		load_quad(100, t + M_PI + M_3PI_4, 0x9900FFFF);
 
 		SP_DMEM[7] = (uint32_t) __safe_buffer[disp-1];
 		SP_DMEM[0] = (uint32_t) RDP_BUFFER_END;
