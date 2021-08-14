@@ -44,6 +44,10 @@ typedef struct {
 	fixed32 dxmdy;
 } TriangleCoeffs;
 
+static uint32_t num_triangles;
+
+#define RDP_BUFFER_END ((volatile uint32_t *) (80 + num_triangles * 32))
+
 void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 	char szBuffer[64];
 
@@ -63,8 +67,8 @@ void set_xbus() {
 	DPC_STATUS_REG = SET_XBS;
 }
 
-void load_triangle(TriangleCoeffs coeffs, uint32_t index) {
-	volatile uint32_t *command = SP_DMEM + 18 + index * 8;
+void load_triangle(TriangleCoeffs coeffs) {
+	volatile uint32_t *command = SP_DMEM + (uint32_t) RDP_BUFFER_END / sizeof(uint32_t);
 
 	command[0] = 0x8000000 | (coeffs.major << 23) | (coeffs.yl >> 14);
 	command[1] = ((coeffs.ym & 0x7FFC000) << 2) | (coeffs.yh >> 14);
@@ -77,6 +81,8 @@ void load_triangle(TriangleCoeffs coeffs, uint32_t index) {
 
 	command[6] = coeffs.xm;
 	command[7] = coeffs.dxmdy;
+
+	num_triangles++;
 }
 
 void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y1, fixed32 x2, fixed32 y2, fixed32 x3, fixed32 y3) {
@@ -141,7 +147,7 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y
 	coeffs->dxmdy = dxmdy;
 }
 
-void load_rotated_triangle(float angle, uint32_t index) {
+void load_rotated_triangle(float angle) {
 	float xr1 = 20;
 	float yr1 = -60;
 	float xr2 = -46;
@@ -160,7 +166,7 @@ void load_rotated_triangle(float angle, uint32_t index) {
 
 	TriangleCoeffs coeffs;
 	compute_triangle_coefficients(&coeffs, FIXED32(x1), FIXED32(y1), FIXED32(x2), FIXED32(y2), FIXED32(x3), FIXED32(y3));
-	load_triangle(coeffs, index);
+	load_triangle(coeffs);
 }
 
 int main(void){
@@ -184,16 +190,20 @@ int main(void){
 	while (1) {
 		while(!(disp = display_lock()));
 
-		SP_DMEM[5] = (uint32_t) __safe_buffer[disp-1];
+		num_triangles = 0;
 
 		t += 0.01;
 
-		load_rotated_triangle(t, 0);
-		load_rotated_triangle(t + 1.5, 1);
+		load_rotated_triangle(t);
+		load_rotated_triangle(t + 1.5);
+		load_rotated_triangle(t + 2.4);
+
+		SP_DMEM[7] = (uint32_t) __safe_buffer[disp-1];
+		SP_DMEM[0] = (uint32_t) RDP_BUFFER_END;
 
 		set_xbus();
 		run_ucode();
-		// graphics_printf(disp, 200, 20, "%f", (float) ((y2 == y1) ? 0 : DIV_FX32(x2 - x1, y2 - y1)) / 65536);
+		graphics_printf(disp, 200, 20, "%lu", &tri3d_ucode_end - &tri3d_ucode_data_start);
 		display_show(disp);
 	}
 }

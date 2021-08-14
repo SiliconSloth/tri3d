@@ -9,12 +9,19 @@ arch n64.rsp
 base $0000
 
 RSPStart:
-  RSPDPC(RDPBuffer, RDPBufferEnd)
+  la a0,RDPBuffer // A0 = DPC Command Start Address
+  mtc0 a0,c8 // Store DPC Command Start Address To DP Start Register ($A4100000)
+  
+  lw a0,RDPBufferEndPointer(r0)
+  mtc0 a0,c9 // Store DPC Command End Address To DP End Register ($A4100004)
   break // Set SP Status Halt, Broke & Check For Interrupt
 align(8)
 
 RSPData:
 base $0000
+
+RDPBufferEndPointer:
+  dw 0
 
 align(8)
 RDPBuffer:
@@ -30,8 +37,5 @@ arch n64.rdp
 
   Sync_Pipe // Stall Pipeline, Until Preceeding Primitives Completely Finish
   Set_Blend_Color $FCB195FF // Set Blend Color: RGBA
-  Fill_Triangle 0,0,0, 0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
-  Fill_Triangle 0,0,0, 0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
-RDPBufferEnd:
 
 align(8)
