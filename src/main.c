@@ -46,7 +46,7 @@ typedef struct {
 
 static uint32_t num_triangles;
 
-#define RDP_BUFFER_END ((volatile uint32_t *) (80 + num_triangles * 32))
+#define RDP_BUFFER_END ((volatile uint32_t *) (80 + num_triangles * 40))
 
 void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 	char szBuffer[64];
@@ -67,8 +67,13 @@ void set_xbus() {
 	DPC_STATUS_REG = SET_XBS;
 }
 
-void load_triangle(TriangleCoeffs coeffs) {
+void load_triangle(TriangleCoeffs coeffs, uint32_t color) {
 	volatile uint32_t *command = SP_DMEM + (uint32_t) RDP_BUFFER_END / sizeof(uint32_t);
+
+	command[0] = 0x39000000;
+	command[1] = color;
+
+	command += 2;
 
 	command[0] = 0x8000000 | (coeffs.major << 23) | (coeffs.yl >> 14);
 	command[1] = ((coeffs.ym & 0x7FFC000) << 2) | (coeffs.yh >> 14);
@@ -147,7 +152,7 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y
 	coeffs->dxmdy = dxmdy;
 }
 
-void load_rotated_triangle(float angle) {
+void load_rotated_triangle(float angle, uint32_t color) {
 	float xr1 = 20;
 	float yr1 = -60;
 	float xr2 = -46;
@@ -166,7 +171,7 @@ void load_rotated_triangle(float angle) {
 
 	TriangleCoeffs coeffs;
 	compute_triangle_coefficients(&coeffs, FIXED32(x1), FIXED32(y1), FIXED32(x2), FIXED32(y2), FIXED32(x3), FIXED32(y3));
-	load_triangle(coeffs);
+	load_triangle(coeffs, color);
 }
 
 int main(void){
@@ -194,9 +199,9 @@ int main(void){
 
 		t += 0.01;
 
-		load_rotated_triangle(t);
-		load_rotated_triangle(t + 1.5);
-		load_rotated_triangle(t + 2.4);
+		load_rotated_triangle(t, 0xF0F000FF);
+		load_rotated_triangle(t + 1.5, 0x00F0F0FF);
+		load_rotated_triangle(t + 2.4, 0xF000F0FF);
 
 		SP_DMEM[7] = (uint32_t) __safe_buffer[disp-1];
 		SP_DMEM[0] = (uint32_t) RDP_BUFFER_END;

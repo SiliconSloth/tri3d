@@ -36,6 +36,5 @@ arch n64.rdp
   Set_Combine_Mode $0,$00, 0,0, $6,$01, $0,$F, 1,0, 0,0,0, 7,7,7 // Set Combine Mode: SubA RGB0,MulRGB0, SubA Alpha0,MulAlpha0, SubA RGB1,MulRGB1, SubB RGB0,SubB RGB1, SubA Alpha1,MulAlpha1, AddRGB0,SubB Alpha0,AddAlpha0, AddRGB1,SubB Alpha1,AddAlpha1
 
   Sync_Pipe // Stall Pipeline, Until Preceeding Primitives Completely Finish
-  Set_Blend_Color $FCB195FF // Set Blend Color: RGBA
 
 align(8)
