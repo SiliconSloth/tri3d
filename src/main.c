@@ -44,9 +44,9 @@ typedef struct {
 	fixed32 dxmdy;
 } TriangleCoeffs;
 
-static uint32_t num_triangles;
+static uint32_t commands_size;
 
-#define RDP_BUFFER_END ((volatile uint32_t *) (80 + num_triangles * 40))
+#define RDP_BUFFER_END ((volatile uint32_t *) (80 + commands_size))
 
 void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 	char szBuffer[64];
@@ -67,13 +67,8 @@ void set_xbus() {
 	DPC_STATUS_REG = SET_XBS;
 }
 
-void load_triangle(TriangleCoeffs coeffs, uint32_t color) {
+void load_triangle(TriangleCoeffs coeffs) {
 	volatile uint32_t *command = SP_DMEM + (uint32_t) RDP_BUFFER_END / sizeof(uint32_t);
-
-	command[0] = 0x39000000;
-	command[1] = color;
-
-	command += 2;
 
 	command[0] = 0x8000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
 	command[1] = ((coeffs.ym & 0xFFFFC000) << 2) | ((uint32_t) coeffs.yh >> 14);
@@ -87,7 +82,25 @@ void load_triangle(TriangleCoeffs coeffs, uint32_t color) {
 	command[6] = coeffs.xm;
 	command[7] = coeffs.dxmdy;
 
-	num_triangles++;
+	commands_size += 32;
+}
+
+void load_color(uint32_t color) {
+	volatile uint32_t *command = SP_DMEM + (uint32_t) RDP_BUFFER_END / sizeof(uint32_t);
+
+	command[0] = 0x39000000;
+	command[1] = color;
+
+	commands_size += 8;
+}
+
+void load_sync() {
+	volatile uint32_t *command = SP_DMEM + (uint32_t) RDP_BUFFER_END / sizeof(uint32_t);
+
+	command[0] = 0x27000000;
+	command[1] = 0;
+
+	commands_size += 8;
 }
 
 void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y1, fixed32 x2, fixed32 y2, fixed32 x3, fixed32 y3) {
@@ -153,10 +166,10 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y
 	coeffs->dxmdy = dxmdy;
 }
 
-void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 x2, fixed32 y2, fixed32 x3, fixed32 y3, uint32_t color) {
+void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 x2, fixed32 y2, fixed32 x3, fixed32 y3) {
 	TriangleCoeffs coeffs;
 	compute_triangle_coefficients(&coeffs, x1, y1, x2, y2, x3, y3);
-	load_triangle(coeffs, color);
+	load_triangle(coeffs);
 }
 
 #define RADIUS 100
@@ -267,6 +280,8 @@ void load_quad(float radius, float angle, float z_angle, uint32_t color) {
 		}
 	}
 
+	load_sync();
+	load_color(color);
 	for (int i = 0; i < sizeof(indices) / sizeof(indices[0]); i++) {
 		int i1 = indices[i][0];
 		int i2 = indices[i][1];
@@ -274,7 +289,7 @@ void load_quad(float radius, float angle, float z_angle, uint32_t color) {
 
 		load_triangle_verts(transformed_vertices[i1][0], transformed_vertices[i1][1],
 							transformed_vertices[i2][0], transformed_vertices[i2][1],
-							transformed_vertices[i3][0], transformed_vertices[i3][1], color);
+							transformed_vertices[i3][0], transformed_vertices[i3][1]);
 	}
 }
 
@@ -299,7 +314,7 @@ int main(void){
 	while (1) {
 		while(!(disp = display_lock()));
 
-		num_triangles = 0;
+		commands_size = 0;
 
 		t += 0.01;
 
