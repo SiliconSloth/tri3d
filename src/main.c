@@ -159,29 +159,47 @@ void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 x2, fixed32 y2, fixed32
 	load_triangle(coeffs, color);
 }
 
+#define RADIUS 100
+
+static const fixed32 vertices[4][2] = {
+	{FIXED32(RADIUS - 20), FIXED32(-20)},
+	{FIXED32(RADIUS + 20), FIXED32(-20)},
+	{FIXED32(RADIUS + 20), FIXED32(20)},
+	{FIXED32(RADIUS - 20), FIXED32(20)}
+};
+
+static const int indices[2][3] = {
+	{0, 2, 1},
+	{0, 3, 2}
+};
+
+static fixed32 transformed_vertices[4][2];
+
 void load_quad(float radius, float angle, uint32_t color) {
-	float xr1 = -20;
-	float yr1 = -20;
-	float xr2 = 20;
-	float yr2 = 20;
+	fixed32 transform[2][2] = {
+		{FIXED32(cosf(angle)), FIXED32(sinf(angle))},
+		{FIXED32(-sinf(angle)), FIXED32(cosf(angle))}
+	};
 
-	xr1 += radius;
-	xr2 += radius;
+	for (int i = 0; i < 2; i++) {
+		for (int j = 0; j < 4; j++) {
+			fixed32 sum = FIXED32(0);
+			for (int k = 0; k < 2; k++) {
+				sum += MUL_FX32(transform[k][i], vertices[j][k]);
+			}
+			transformed_vertices[j][i] = sum;
+		}
+	}
 
-	float x1 = xr1 * cosf(angle) - yr1 * sinf(angle) + 160;
-	float y1 = xr1 * sinf(angle) + yr1 * cosf(angle) + 120;
+	for (int i = 0; i < sizeof(indices) / sizeof(indices[0]); i++) {
+		int i1 = indices[i][0];
+		int i2 = indices[i][1];
+		int i3 = indices[i][2];
 
-	float x2 = xr2 * cosf(angle) - yr1 * sinf(angle) + 160;
-	float y2 = xr2 * sinf(angle) + yr1 * cosf(angle) + 120;
-
-	float x3 = xr2 * cosf(angle) - yr2 * sinf(angle) + 160;
-	float y3 = xr2 * sinf(angle) + yr2 * cosf(angle) + 120;
-
-	float x4 = xr1 * cosf(angle) - yr2 * sinf(angle) + 160;
-	float y4 = xr1 * sinf(angle) + yr2 * cosf(angle) + 120;
-
-	load_triangle_verts(FIXED32(x1), FIXED32(y1), FIXED32(x3), FIXED32(y3), FIXED32(x2), FIXED32(y2), color);
-	load_triangle_verts(FIXED32(x1), FIXED32(y1), FIXED32(x4), FIXED32(y4), FIXED32(x3), FIXED32(y3), color);
+		load_triangle_verts(transformed_vertices[i1][0] + FIXED32(160), transformed_vertices[i1][1] + FIXED32(120),
+							transformed_vertices[i2][0] + FIXED32(160), transformed_vertices[i2][1] + FIXED32(120),
+							transformed_vertices[i3][0] + FIXED32(160), transformed_vertices[i3][1] + FIXED32(120), color);
+	}
 }
 
 int main(void){
