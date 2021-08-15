@@ -138,8 +138,9 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y
 
 	coeffs->major = major;
 
-	coeffs->yl = y3;
-	coeffs->ym = y2;
+	// Round up to next subpixel
+	coeffs->yl = (y3 + 0x3FFF);
+	coeffs->ym = (y2 + 0x3FFF);
 	coeffs->yh = y1;
 
 	coeffs->xl = xl;
