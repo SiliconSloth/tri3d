@@ -161,16 +161,30 @@ void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 x2, fixed32 y2, fixed32
 
 #define RADIUS 100
 
-static const fixed32 vertices[4][3] = {
-	{FIXED32(-20), FIXED32(-20), 0},
-	{FIXED32( 20), FIXED32(-20), 0},
-	{FIXED32( 20), FIXED32( 20), 0},
-	{FIXED32(-20), FIXED32( 20), 0}
+static const fixed32 vertices[8][3] = {
+	{FIXED32(-20), FIXED32(-20), FIXED32(-20)},
+	{FIXED32( 20), FIXED32(-20), FIXED32(-20)},
+	{FIXED32( 20), FIXED32( 20), FIXED32(-20)},
+	{FIXED32(-20), FIXED32( 20), FIXED32(-20)},
+	{FIXED32(-20), FIXED32(-20), FIXED32( 20)},
+	{FIXED32( 20), FIXED32(-20), FIXED32( 20)},
+	{FIXED32( 20), FIXED32( 20), FIXED32( 20)},
+	{FIXED32(-20), FIXED32( 20), FIXED32( 20)}
 };
 
-static const int indices[2][3] = {
+static const int indices[12][3] = {
 	{0, 2, 1},
-	{0, 3, 2}
+	{0, 3, 2},
+	{4, 6, 5},
+	{4, 7, 6},
+	{4, 3, 0},
+	{4, 7, 3},
+	{1, 6, 5},
+	{1, 2, 6},
+	{4, 1, 5},
+	{4, 0, 1},
+	{6, 3, 2},
+	{6, 7, 3}
 };
 
 static fixed32 transformed_vertices[4][2];
@@ -238,7 +252,7 @@ void load_quad(float radius, float angle, float z_angle, uint32_t color) {
 	}
 
 	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
+		for (int j = 0; j < 8; j++) {
 			fixed32 sum = FIXED32(0);
 			for (int k = 0; k < 4; k++) {
 				sum += MUL_FX32(transformation3[k][i], k == 3? FIXED32(1) : vertices[j][k]);
