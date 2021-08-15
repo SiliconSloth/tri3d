@@ -162,10 +162,10 @@ void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 x2, fixed32 y2, fixed32
 #define RADIUS 100
 
 static const fixed32 vertices[4][2] = {
-	{FIXED32(RADIUS - 20), FIXED32(-20)},
-	{FIXED32(RADIUS + 20), FIXED32(-20)},
-	{FIXED32(RADIUS + 20), FIXED32(20)},
-	{FIXED32(RADIUS - 20), FIXED32(20)}
+	{FIXED32(-20), FIXED32(-20)},
+	{FIXED32( 20), FIXED32(-20)},
+	{FIXED32( 20), FIXED32( 20)},
+	{FIXED32(-20), FIXED32( 20)}
 };
 
 static const int indices[2][3] = {
@@ -176,26 +176,43 @@ static const int indices[2][3] = {
 static fixed32 transformed_vertices[4][2];
 
 void load_quad(float radius, float angle, uint32_t color) {
+	fixed32 translation1[3][3] = {
+		{FIXED32(1), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(1), FIXED32(0)},
+		{FIXED32(RADIUS), FIXED32(0), FIXED32(1)}
+	};
+
 	fixed32 rotation[3][3] = {
 		{FIXED32(cosf(angle)),  FIXED32(sinf(angle)), FIXED32(0)},
 		{FIXED32(-sinf(angle)), FIXED32(cosf(angle)), FIXED32(0)},
 		{FIXED32(0), 			FIXED32(0), 		  FIXED32(1)}
 	};
 	
-	fixed32 translation[3][3] = {
+	fixed32 translation2[3][3] = {
 		{FIXED32(1), FIXED32(0), FIXED32(0)},
 		{FIXED32(0), FIXED32(1), FIXED32(0)},
 		{FIXED32(160), FIXED32(120), FIXED32(1)}
 	};
 
-	fixed32 transformation[3][3];
+	fixed32 transformation1[3][3];
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
 			fixed32 sum = FIXED32(0);
 			for (int k = 0; k < 3; k++) {
-				sum += MUL_FX32(translation[k][i], rotation[j][k]);
+				sum += MUL_FX32(rotation[k][i], translation1[j][k]);
 			}
-			transformation[j][i] = sum;
+			transformation1[j][i] = sum;
+		}
+	}
+	
+	fixed32 transformation2[3][3];
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			fixed32 sum = FIXED32(0);
+			for (int k = 0; k < 3; k++) {
+				sum += MUL_FX32(translation2[k][i], transformation1[j][k]);
+			}
+			transformation2[j][i] = sum;
 		}
 	}
 
@@ -203,7 +220,7 @@ void load_quad(float radius, float angle, uint32_t color) {
 		for (int j = 0; j < 4; j++) {
 			fixed32 sum = FIXED32(0);
 			for (int k = 0; k < 3; k++) {
-				sum += MUL_FX32(transformation[k][i], k == 2? FIXED32(1) : vertices[j][k]);
+				sum += MUL_FX32(transformation2[k][i], k == 2? FIXED32(1) : vertices[j][k]);
 			}
 
 			if (i < 2) {
