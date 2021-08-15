@@ -123,9 +123,9 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y
 		}
 	}
 
-	fixed32 dxldy = (y3 == y2) ? 0 : DIV_FX32(x3 - x2, y3 - y2);
-	fixed32 dxmdy = (y2 == y1) ? 0 : DIV_FX32(x2 - x1, y2 - y1);
-	fixed32 dxhdy = (y3 == y1) ? 0 : DIV_FX32(x3 - x1, y3 - y1);
+	fixed32 dxldy = (y3 - y2 < FIXED32(1)) ? 0 : DIV_FX32(x3 - x2, y3 - y2);
+	fixed32 dxmdy = (y2 - y1 < FIXED32(1)) ? 0 : DIV_FX32(x2 - x1, y2 - y1);
+	fixed32 dxhdy = (y3 - y1 < FIXED32(1)) ? 0 : DIV_FX32(x3 - x1, y3 - y1);
 
 	fixed32 y1_frac = y1 & 0xFFFF;
 	fixed32 xh = x1 - MUL_FX32(y1_frac, dxhdy);
