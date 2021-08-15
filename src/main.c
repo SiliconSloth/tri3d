@@ -161,11 +161,11 @@ void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 x2, fixed32 y2, fixed32
 
 #define RADIUS 100
 
-static const fixed32 vertices[4][2] = {
-	{FIXED32(-20), FIXED32(-20)},
-	{FIXED32( 20), FIXED32(-20)},
-	{FIXED32( 20), FIXED32( 20)},
-	{FIXED32(-20), FIXED32( 20)}
+static const fixed32 vertices[4][3] = {
+	{FIXED32(-20), FIXED32(-20), 0},
+	{FIXED32( 20), FIXED32(-20), 0},
+	{FIXED32( 20), FIXED32( 20), 0},
+	{FIXED32(-20), FIXED32( 20), 0}
 };
 
 static const int indices[2][3] = {
@@ -175,57 +175,78 @@ static const int indices[2][3] = {
 
 static fixed32 transformed_vertices[4][2];
 
-void load_quad(float radius, float angle, uint32_t color) {
-	fixed32 translation1[3][3] = {
-		{FIXED32(1), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(1), FIXED32(0)},
-		{FIXED32(RADIUS), FIXED32(0), FIXED32(1)}
+void load_quad(float radius, float angle, float z_angle, uint32_t color) {
+	fixed32 translation1[4][4] = {
+		{FIXED32(1), FIXED32(0), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(1), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(0), FIXED32(1), FIXED32(0)},
+		{FIXED32(RADIUS), FIXED32(0), FIXED32(0), FIXED32(1)}
 	};
 
-	fixed32 rotation[3][3] = {
-		{FIXED32(cosf(angle)),  FIXED32(sinf(angle)), FIXED32(0)},
-		{FIXED32(-sinf(angle)), FIXED32(cosf(angle)), FIXED32(0)},
-		{FIXED32(0), 			FIXED32(0), 		  FIXED32(1)}
+	fixed32 rotation1[4][4] = {
+		{FIXED32(cosf(angle)),  FIXED32(sinf(angle)), FIXED32(0), FIXED32(0)},
+		{FIXED32(-sinf(angle)), FIXED32(cosf(angle)), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), 			FIXED32(0), 		  FIXED32(1), FIXED32(0)},
+		{FIXED32(0), 			FIXED32(0), 		  FIXED32(0), FIXED32(1)}
+	};
+
+	fixed32 rotation2[4][4] = {
+		{FIXED32(1), 			FIXED32(0), 		  FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(cosf(z_angle)),  FIXED32(sinf(z_angle)), FIXED32(0)},
+		{FIXED32(0), FIXED32(-sinf(z_angle)), FIXED32(cosf(z_angle)), FIXED32(0)},
+		{FIXED32(0), 			FIXED32(0), 		  FIXED32(0), FIXED32(1)}
 	};
 	
-	fixed32 translation2[3][3] = {
-		{FIXED32(1), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(1), FIXED32(0)},
-		{FIXED32(160), FIXED32(120), FIXED32(1)}
+	fixed32 translation2[4][4] = {
+		{FIXED32(1), FIXED32(0), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(1), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(0), FIXED32(1), FIXED32(0)},
+		{FIXED32(160), FIXED32(120), FIXED32(0), FIXED32(1)}
 	};
 
-	fixed32 transformation1[3][3];
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
+	fixed32 transformation1[4][4];
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
 			fixed32 sum = FIXED32(0);
-			for (int k = 0; k < 3; k++) {
-				sum += MUL_FX32(rotation[k][i], translation1[j][k]);
+			for (int k = 0; k < 4; k++) {
+				sum += MUL_FX32(rotation1[k][i], translation1[j][k]);
 			}
 			transformation1[j][i] = sum;
 		}
 	}
 	
-	fixed32 transformation2[3][3];
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
+	fixed32 transformation2[4][4];
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
 			fixed32 sum = FIXED32(0);
-			for (int k = 0; k < 3; k++) {
-				sum += MUL_FX32(translation2[k][i], transformation1[j][k]);
+			for (int k = 0; k < 4; k++) {
+				sum += MUL_FX32(rotation2[k][i], transformation1[j][k]);
 			}
 			transformation2[j][i] = sum;
 		}
 	}
-
-	for (int i = 0; i < 3; i++) {
+	
+	fixed32 transformation3[4][4];
+	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
 			fixed32 sum = FIXED32(0);
-			for (int k = 0; k < 3; k++) {
-				sum += MUL_FX32(transformation2[k][i], k == 2? FIXED32(1) : vertices[j][k]);
+			for (int k = 0; k < 4; k++) {
+				sum += MUL_FX32(translation2[k][i], transformation2[j][k]);
+			}
+			transformation3[j][i] = sum;
+		}
+	}
+
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			fixed32 sum = FIXED32(0);
+			for (int k = 0; k < 4; k++) {
+				sum += MUL_FX32(transformation3[k][i], k == 3? FIXED32(1) : vertices[j][k]);
 			}
 
 			if (i < 2) {
 				transformed_vertices[j][i] = sum;
-			} else {
+			} else if (i  == 3) {
 				transformed_vertices[j][0] = DIV_FX32(transformed_vertices[j][0], sum);
 				transformed_vertices[j][1] = DIV_FX32(transformed_vertices[j][1], sum);
 			}
@@ -268,14 +289,14 @@ int main(void){
 
 		t += 0.01;
 
-		load_quad(100, t,           	   0xFF0000FF);
-		load_quad(100, t + M_PI_4,  	   0x00FF00FF);
-		load_quad(100, t + M_PI_2,  	   0x0000FFFF);
-		load_quad(100, t + M_3PI_4, 	   0xFFFF00FF);
-		load_quad(100, t + M_PI,    	   0xFF00FFFF);
-		load_quad(100, t + M_PI + M_PI_4,  0x00FFFFFF);
-		load_quad(100, t + M_PI + M_PI_2,  0xFF9900FF);
-		load_quad(100, t + M_PI + M_3PI_4, 0x9900FFFF);
+		load_quad(100, t,           	   t, 0xFF0000FF);
+		load_quad(100, t + M_PI_4,  	   t, 0x00FF00FF);
+		load_quad(100, t + M_PI_2,  	   t, 0x0000FFFF);
+		load_quad(100, t + M_3PI_4, 	   t, 0xFFFF00FF);
+		load_quad(100, t + M_PI,    	   t, 0xFF00FFFF);
+		load_quad(100, t + M_PI + M_PI_4,  t, 0x00FFFFFF);
+		load_quad(100, t + M_PI + M_PI_2,  t, 0xFF9900FF);
+		load_quad(100, t + M_PI + M_3PI_4, t, 0x9900FFFF);
 
 		SP_DMEM[7] = (uint32_t) __safe_buffer[disp-1];
 		SP_DMEM[0] = (uint32_t) RDP_BUFFER_END;
