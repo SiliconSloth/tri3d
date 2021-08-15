@@ -75,8 +75,8 @@ void load_triangle(TriangleCoeffs coeffs, uint32_t color) {
 
 	command += 2;
 
-	command[0] = 0x8000000 | (coeffs.major << 23) | (coeffs.yl >> 14);
-	command[1] = ((coeffs.ym & 0x7FFC000) << 2) | (coeffs.yh >> 14);
+	command[0] = 0x8000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
+	command[1] = ((coeffs.ym & 0xFFFFC000) << 2) | ((uint32_t) coeffs.yh >> 14);
 
 	command[2] = coeffs.xl;
 	command[3] = coeffs.dxldy;
