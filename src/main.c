@@ -176,18 +176,42 @@ static const int indices[2][3] = {
 static fixed32 transformed_vertices[4][2];
 
 void load_quad(float radius, float angle, uint32_t color) {
-	fixed32 transform[2][2] = {
-		{FIXED32(cosf(angle)), FIXED32(sinf(angle))},
-		{FIXED32(-sinf(angle)), FIXED32(cosf(angle))}
+	fixed32 rotation[3][3] = {
+		{FIXED32(cosf(angle)),  FIXED32(sinf(angle)), FIXED32(0)},
+		{FIXED32(-sinf(angle)), FIXED32(cosf(angle)), FIXED32(0)},
+		{FIXED32(0), 			FIXED32(0), 		  FIXED32(1)}
+	};
+	
+	fixed32 translation[3][3] = {
+		{FIXED32(1), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(1), FIXED32(0)},
+		{FIXED32(160), FIXED32(120), FIXED32(1)}
 	};
 
-	for (int i = 0; i < 2; i++) {
+	fixed32 transformation[3][3];
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			fixed32 sum = FIXED32(0);
+			for (int k = 0; k < 3; k++) {
+				sum += MUL_FX32(translation[k][i], rotation[j][k]);
+			}
+			transformation[j][i] = sum;
+		}
+	}
+
+	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 4; j++) {
 			fixed32 sum = FIXED32(0);
-			for (int k = 0; k < 2; k++) {
-				sum += MUL_FX32(transform[k][i], vertices[j][k]);
+			for (int k = 0; k < 3; k++) {
+				sum += MUL_FX32(transformation[k][i], k == 2? FIXED32(1) : vertices[j][k]);
 			}
-			transformed_vertices[j][i] = sum;
+
+			if (i < 2) {
+				transformed_vertices[j][i] = sum;
+			} else {
+				transformed_vertices[j][0] = DIV_FX32(transformed_vertices[j][0], sum);
+				transformed_vertices[j][1] = DIV_FX32(transformed_vertices[j][1], sum);
+			}
 		}
 	}
 
@@ -196,9 +220,9 @@ void load_quad(float radius, float angle, uint32_t color) {
 		int i2 = indices[i][1];
 		int i3 = indices[i][2];
 
-		load_triangle_verts(transformed_vertices[i1][0] + FIXED32(160), transformed_vertices[i1][1] + FIXED32(120),
-							transformed_vertices[i2][0] + FIXED32(160), transformed_vertices[i2][1] + FIXED32(120),
-							transformed_vertices[i3][0] + FIXED32(160), transformed_vertices[i3][1] + FIXED32(120), color);
+		load_triangle_verts(transformed_vertices[i1][0], transformed_vertices[i1][1],
+							transformed_vertices[i2][0], transformed_vertices[i2][1],
+							transformed_vertices[i3][0], transformed_vertices[i3][1], color);
 	}
 }
 
