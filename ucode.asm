@@ -9,10 +9,10 @@ arch n64.rsp
 base $0000
 
 RSPStart:
-  la a0,RDPBuffer // A0 = DPC Command Start Address
+  lw a0,RDPStartPointer(r0)
   mtc0 a0,c8 // Store DPC Command Start Address To DP Start Register ($A4100000)
   
-  lw a0,RDPBufferEndPointer(r0)
+  lw a0,RDPEndPointer(r0)
   mtc0 a0,c9 // Store DPC Command End Address To DP End Register ($A4100004)
   break // Set SP Status Halt, Broke & Check For Interrupt
 align(8)
@@ -20,7 +20,9 @@ align(8)
 RSPData:
 base $0000
 
-RDPBufferEndPointer:
+RDPStartPointer:
+  dw 0
+RDPEndPointer:
   dw 0
 
 align(8)

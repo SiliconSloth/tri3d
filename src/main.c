@@ -320,23 +320,62 @@ int main(void){
 
 		t += 0.01;
 
+		// SP_DMEM[17] = (uint32_t) &z_buffers[disp-1];
+		// SP_DMEM[7] = (uint32_t) __safe_buffer[disp-1];
+		// SP_DMEM[9] = (uint32_t) __safe_buffer[disp-1];
+		SP_DMEM[17] = (uint32_t) __safe_buffer[disp-1];
+		SP_DMEM[7] = (uint32_t) &z_buffers[disp-1];
+		SP_DMEM[9] = (uint32_t) &z_buffers[disp-1];
+
+		SP_DMEM[0] = 8;
+		SP_DMEM[1] = 104;
+
+		set_xbus();
+		run_ucode();
+
 		load_quad(100, t,           	   t, 0xFF0000FF);
 		load_quad(100, t + M_PI_4,  	   t, 0x00FF00FF);
 		load_quad(100, t + M_PI_2,  	   t, 0x0000FFFF);
 		load_quad(100, t + M_3PI_4, 	   t, 0xFFFF00FF);
+
+		uint32_t split = (uint32_t) RDP_BUFFER_END;
+
+		SP_DMEM[0] = 104;
+		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
+		run_ucode();
+
 		load_quad(100, t + M_PI,    	   t, 0xFF00FFFF);
 		load_quad(100, t + M_PI + M_PI_4,  t, 0x00FFFFFF);
 		load_quad(100, t + M_PI + M_PI_2,  t, 0xFF9900FF);
 		load_quad(100, t + M_PI + M_3PI_4, t, 0x9900FFFF);
 
-		SP_DMEM[17] = (uint32_t) &z_buffers[disp-1];
-		SP_DMEM[7] = (uint32_t) __safe_buffer[disp-1];
-		SP_DMEM[9] = (uint32_t) __safe_buffer[disp-1];
-		SP_DMEM[0] = (uint32_t) RDP_BUFFER_END;
-
-		set_xbus();
+		SP_DMEM[0] = split;
+		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
 		run_ucode();
-		graphics_printf(disp, 200, 20, "%lu", &tri3d_ucode_end - &tri3d_ucode_data_start);
+
+		commands_size = 0;
+
+		load_quad(100, t,           	   t + M_PI_2, 0xFF0000FF);
+		load_quad(100, t + M_PI_4,  	   t + M_PI_2, 0x00FF00FF);
+		load_quad(100, t + M_PI_2,  	   t + M_PI_2, 0x0000FFFF);
+		load_quad(100, t + M_3PI_4, 	   t + M_PI_2, 0xFFFF00FF);
+
+		split = (uint32_t) RDP_BUFFER_END;
+
+		SP_DMEM[0] = 104;
+		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
+		run_ucode();
+
+		load_quad(100, t + M_PI,    	   t + M_PI_2, 0xFF00FFFF);
+		load_quad(100, t + M_PI + M_PI_4,  t + M_PI_2, 0x00FFFFFF);
+		load_quad(100, t + M_PI + M_PI_2,  t + M_PI_2, 0xFF9900FF);
+		load_quad(100, t + M_PI + M_3PI_4, t + M_PI_2, 0x9900FFFF);
+
+		SP_DMEM[0] = split;
+		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
+		run_ucode();
+
+		graphics_printf(disp, 200, 20, "%u", commands_size);
 		display_show(disp);
 	}
 }
