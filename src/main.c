@@ -44,9 +44,11 @@ typedef struct {
 	fixed32 dxmdy;
 } TriangleCoeffs;
 
+static uint16_t z_buffers[2][320 * 240];// __attribute__ ((aligned (8)));
+
 static uint32_t commands_size;
 
-#define RDP_BUFFER_END ((volatile uint32_t *) (80 + commands_size))
+#define RDP_BUFFER_END ((volatile uint32_t *) (104 + commands_size))
 
 void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 	char szBuffer[64];
@@ -327,7 +329,9 @@ int main(void){
 		load_quad(100, t + M_PI + M_PI_2,  t, 0xFF9900FF);
 		load_quad(100, t + M_PI + M_3PI_4, t, 0x9900FFFF);
 
+		SP_DMEM[17] = (uint32_t) &z_buffers[disp-1];
 		SP_DMEM[7] = (uint32_t) __safe_buffer[disp-1];
+		SP_DMEM[9] = (uint32_t) __safe_buffer[disp-1];
 		SP_DMEM[0] = (uint32_t) RDP_BUFFER_END;
 
 		set_xbus();
