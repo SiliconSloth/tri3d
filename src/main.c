@@ -216,17 +216,17 @@ void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 z1,
 	load_triangle(coeffs);
 }
 
-#define RADIUS 0
+#define RADIUS 100
 
 static const fixed32 vertices[8][3] = {
-	{FIXED32(-100), FIXED32(-20), FIXED32(-20)},
-	{FIXED32( 100), FIXED32(-20), FIXED32(-20)},
-	{FIXED32( 100), FIXED32( 60), FIXED32(-20)},
-	{FIXED32(-100), FIXED32( 60), FIXED32(-20)},
-	{FIXED32(-100), FIXED32(-20), FIXED32( 20)},
-	{FIXED32( 100), FIXED32(-20), FIXED32( 20)},
-	{FIXED32( 100), FIXED32( 60), FIXED32( 20)},
-	{FIXED32(-100), FIXED32( 60), FIXED32( 20)}
+	{FIXED32(-20), FIXED32(-20), FIXED32(-20)},
+	{FIXED32( 20), FIXED32(-20), FIXED32(-20)},
+	{FIXED32( 20), FIXED32( 20), FIXED32(-20)},
+	{FIXED32(-20), FIXED32( 20), FIXED32(-20)},
+	{FIXED32(-20), FIXED32(-20), FIXED32( 20)},
+	{FIXED32( 20), FIXED32(-20), FIXED32( 20)},
+	{FIXED32( 20), FIXED32( 20), FIXED32( 20)},
+	{FIXED32(-20), FIXED32( 20), FIXED32( 20)}
 };
 
 static const int indices[12][3] = {
@@ -375,7 +375,7 @@ int main(void){
 		run_ucode();
 
 		load_quad(100, t,           	   t, 0xFF0000FF);
-		// load_quad(100, t + M_PI_4,  	   t, 0x00FF00FF);
+		load_quad(100, t + M_PI_4,  	   t, 0x00FF00FF);
 
 		uint32_t split = (uint32_t) RDP_BUFFER_END;
 
@@ -383,30 +383,30 @@ int main(void){
 		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
 		run_ucode();
 
-		load_quad(100, t + M_PI_2,  	   t + M_PI_2, 0x0000FFFF);
-		// load_quad(100, t + M_3PI_4, 	   t, 0xFFFF00FF);
+		load_quad(100, t + M_PI_2,  	   t, 0x0000FFFF);
+		load_quad(100, t + M_3PI_4, 	   t, 0xFFFF00FF);
 
 		SP_DMEM[0] = split;
 		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
 		run_ucode();
 
-		// commands_size = 0;
+		commands_size = 0;
 
-		// load_quad(100, t + M_PI,    	   t, 0xFF00FFFF);
-		// load_quad(100, t + M_PI + M_PI_4,  t, 0x00FFFFFF);
+		load_quad(100, t + M_PI,    	   t, 0xFF00FFFF);
+		load_quad(100, t + M_PI + M_PI_4,  t, 0x00FFFFFF);
 
-		// split = (uint32_t) RDP_BUFFER_END;
+		split = (uint32_t) RDP_BUFFER_END;
 
-		// SP_DMEM[0] = 104;
-		// SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
-		// run_ucode();
+		SP_DMEM[0] = 104;
+		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
+		run_ucode();
 
-		// load_quad(100, t + M_PI + M_PI_2,  t, 0xFF9900FF);
-		// load_quad(100, t + M_PI + M_3PI_4, t, 0x9900FFFF);
+		load_quad(100, t + M_PI + M_PI_2,  t, 0xFF9900FF);
+		load_quad(100, t + M_PI + M_3PI_4, t, 0x9900FFFF);
 
-		// SP_DMEM[0] = split;
-		// SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
-		// run_ucode();
+		SP_DMEM[0] = split;
+		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
+		run_ucode();
 		
 		// for (size_t i = 0; i < 320 * 240; i++) {
 		// 	__safe_buffer[disp - 1][i] = __safe_buffer[disp - 1][i] & 0xF800;
