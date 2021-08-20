@@ -19,7 +19,7 @@ extern const void tri3d_ucode_start;
 extern const void tri3d_ucode_data_start;
 extern const void tri3d_ucode_end;
 
-extern void *__safe_buffer[];
+extern uint16_t *__safe_buffer[];
 
 typedef int32_t fixed32;
 
@@ -42,6 +42,11 @@ typedef struct {
 
 	fixed32 xm;
 	fixed32 dxmdy;
+
+	fixed32 z;
+	fixed32 dzdx;
+	fixed32 dzde;
+	fixed32 dzdy;
 } TriangleCoeffs;
 
 static uint16_t z_buffers[2][320 * 240];// __attribute__ ((aligned (8)));
@@ -72,7 +77,7 @@ void set_xbus() {
 void load_triangle(TriangleCoeffs coeffs) {
 	volatile uint32_t *command = SP_DMEM + (uint32_t) RDP_BUFFER_END / sizeof(uint32_t);
 
-	command[0] = 0x8000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
+	command[0] = 0x9000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
 	command[1] = ((coeffs.ym & 0xFFFFC000) << 2) | ((uint32_t) coeffs.yh >> 14);
 
 	command[2] = coeffs.xl;
@@ -84,7 +89,15 @@ void load_triangle(TriangleCoeffs coeffs) {
 	command[6] = coeffs.xm;
 	command[7] = coeffs.dxmdy;
 
-	commands_size += 32;
+	command += 8;
+
+	command[0] = coeffs.z;
+	command[1] = coeffs.dzdx;
+
+	command[2] = coeffs.dzde;
+	command[3] = coeffs.dzdy;
+
+	commands_size += 48;
 }
 
 void load_color(uint32_t color) {
@@ -105,8 +118,11 @@ void load_sync() {
 	commands_size += 8;
 }
 
-void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y1, fixed32 x2, fixed32 y2, fixed32 x3, fixed32 y3) {
-	fixed32 temp_x, temp_y;
+void compute_triangle_coefficients(TriangleCoeffs *coeffs,
+						fixed32 x1, fixed32 y1, fixed32 z1,
+						fixed32 x2, fixed32 y2, fixed32 z2,
+						fixed32 x3, fixed32 y3, fixed32 z3) {
+	fixed32 temp_x, temp_y, temp_z;
 	
 	if (y1 > y2) {
 		temp_x = x1;
@@ -116,6 +132,10 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y
 		temp_y = y1;
 		y1 = y2;
 		y2 = temp_y;
+
+		temp_z = z1;
+		z1 = z2;
+		z2 = temp_z;
 	}
 	
 	if (y2 > y3) {
@@ -127,6 +147,10 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y
 		y2 = y3;
 		y3 = temp_y;
 
+		temp_z = z2;
+		z2 = z3;
+		z3 = temp_z;
+
 		if (y1 > y2) {
 			temp_x = x1;
 			x1 = x2;
@@ -135,6 +159,10 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y
 			temp_y = y1;
 			y1 = y2;
 			y2 = temp_y;
+
+			temp_z = z1;
+			z1 = z2;
+			z2 = temp_z;
 		}
 	}
 
@@ -151,6 +179,13 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y
 
 	bool major = MUL_FX32((x3 - x1), (y2 - y1)) - MUL_FX32((y3 - y1), (x2 - x1)) < 0;
 
+	fixed32 dzde = (y3 - y1 < FIXED32(1)) ? 0 : DIV_FX32(z3 - z1, y3 - y1);
+
+	fixed32 x_mid = x1 + MUL_FX32(y2 - y1, dxhdy);
+	fixed32 z_mid = z1 + MUL_FX32(y2 - y1, dzde);
+
+	fixed32 dzdx = (x2 - x_mid < FIXED32(1) && x_mid - x2 < FIXED32(1)) ? 0 : DIV_FX32(z2 - z_mid, x2 - x_mid);
+
 	coeffs->major = major;
 
 	// Round up to next subpixel
@@ -166,25 +201,32 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, fixed32 x1, fixed32 y
 
 	coeffs->xm = xm;
 	coeffs->dxmdy = dxmdy;
+
+	coeffs->z = z1;
+	coeffs->dzdx = dzdx;
+	coeffs->dzde = dzde;
+	coeffs->dzdy = 0;
 }
 
-void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 x2, fixed32 y2, fixed32 x3, fixed32 y3) {
+void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 z1,
+						 fixed32 x2, fixed32 y2, fixed32 z2,
+						 fixed32 x3, fixed32 y3, fixed32 z3) {
 	TriangleCoeffs coeffs;
-	compute_triangle_coefficients(&coeffs, x1, y1, x2, y2, x3, y3);
+	compute_triangle_coefficients(&coeffs, x1, y1, z1, x2, y2, z2, x3, y3, z3);
 	load_triangle(coeffs);
 }
 
-#define RADIUS 100
+#define RADIUS 0
 
 static const fixed32 vertices[8][3] = {
-	{FIXED32(-20), FIXED32(-20), FIXED32(-20)},
-	{FIXED32( 20), FIXED32(-20), FIXED32(-20)},
-	{FIXED32( 20), FIXED32( 20), FIXED32(-20)},
-	{FIXED32(-20), FIXED32( 20), FIXED32(-20)},
-	{FIXED32(-20), FIXED32(-20), FIXED32( 20)},
-	{FIXED32( 20), FIXED32(-20), FIXED32( 20)},
-	{FIXED32( 20), FIXED32( 20), FIXED32( 20)},
-	{FIXED32(-20), FIXED32( 20), FIXED32( 20)}
+	{FIXED32(-100), FIXED32(-20), FIXED32(-20)},
+	{FIXED32( 100), FIXED32(-20), FIXED32(-20)},
+	{FIXED32( 100), FIXED32( 60), FIXED32(-20)},
+	{FIXED32(-100), FIXED32( 60), FIXED32(-20)},
+	{FIXED32(-100), FIXED32(-20), FIXED32( 20)},
+	{FIXED32( 100), FIXED32(-20), FIXED32( 20)},
+	{FIXED32( 100), FIXED32( 60), FIXED32( 20)},
+	{FIXED32(-100), FIXED32( 60), FIXED32( 20)}
 };
 
 static const int indices[12][3] = {
@@ -202,7 +244,19 @@ static const int indices[12][3] = {
 	{6, 7, 3}
 };
 
-static fixed32 transformed_vertices[4][2];
+static fixed32 transformed_vertices[4][3];
+
+void matrix_mul(fixed32 a[4][4], fixed32 b[4][4], fixed32 out[4][4]) {
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			fixed32 sum = FIXED32(0);
+			for (int k = 0; k < 4; k++) {
+				sum += MUL_FX32(a[k][i], b[j][k]);
+			}
+			out[j][i] = sum;
+		}
+	}
+}
 
 void load_quad(float radius, float angle, float z_angle, uint32_t color) {
 	fixed32 translation1[4][4] = {
@@ -230,54 +284,41 @@ void load_quad(float radius, float angle, float z_angle, uint32_t color) {
 		{FIXED32(1), FIXED32(0), FIXED32(0), FIXED32(0)},
 		{FIXED32(0), FIXED32(1), FIXED32(0), FIXED32(0)},
 		{FIXED32(0), FIXED32(0), FIXED32(1), FIXED32(0)},
-		{FIXED32(160), FIXED32(120), FIXED32(0), FIXED32(1)}
+		{FIXED32(160), FIXED32(120), FIXED32(128), FIXED32(1)}
+	};
+	
+	fixed32 scaling[4][4] = {
+		{FIXED32(1), FIXED32(0), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(1), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(0), 0x7FFFFFFF / 256, FIXED32(0)},
+		{FIXED32(0), FIXED32(0), FIXED32(0), FIXED32(1)}
 	};
 
 	fixed32 transformation1[4][4];
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			fixed32 sum = FIXED32(0);
-			for (int k = 0; k < 4; k++) {
-				sum += MUL_FX32(rotation1[k][i], translation1[j][k]);
-			}
-			transformation1[j][i] = sum;
-		}
-	}
+	matrix_mul(rotation1, translation1, transformation1);
 	
 	fixed32 transformation2[4][4];
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			fixed32 sum = FIXED32(0);
-			for (int k = 0; k < 4; k++) {
-				sum += MUL_FX32(rotation2[k][i], transformation1[j][k]);
-			}
-			transformation2[j][i] = sum;
-		}
-	}
+	matrix_mul(rotation2, transformation1, transformation2);
 	
 	fixed32 transformation3[4][4];
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			fixed32 sum = FIXED32(0);
-			for (int k = 0; k < 4; k++) {
-				sum += MUL_FX32(translation2[k][i], transformation2[j][k]);
-			}
-			transformation3[j][i] = sum;
-		}
-	}
+	matrix_mul(translation2, transformation2, transformation3);
+	
+	fixed32 transformation4[4][4];
+	matrix_mul(scaling, transformation3, transformation4);
 
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 8; j++) {
 			fixed32 sum = FIXED32(0);
 			for (int k = 0; k < 4; k++) {
-				sum += MUL_FX32(transformation3[k][i], k == 3? FIXED32(1) : vertices[j][k]);
+				sum += MUL_FX32(transformation4[k][i], k == 3? FIXED32(1) : vertices[j][k]);
 			}
 
-			if (i < 2) {
+			if (i < 3) {
 				transformed_vertices[j][i] = sum;
-			} else if (i  == 3) {
+			} else {
 				transformed_vertices[j][0] = DIV_FX32(transformed_vertices[j][0], sum);
 				transformed_vertices[j][1] = DIV_FX32(transformed_vertices[j][1], sum);
+				transformed_vertices[j][2] = DIV_FX32(transformed_vertices[j][2], sum);
 			}
 		}
 	}
@@ -289,9 +330,9 @@ void load_quad(float radius, float angle, float z_angle, uint32_t color) {
 		int i2 = indices[i][1];
 		int i3 = indices[i][2];
 
-		load_triangle_verts(transformed_vertices[i1][0], transformed_vertices[i1][1],
-							transformed_vertices[i2][0], transformed_vertices[i2][1],
-							transformed_vertices[i3][0], transformed_vertices[i3][1]);
+		load_triangle_verts(transformed_vertices[i1][0], transformed_vertices[i1][1], transformed_vertices[i1][2],
+							transformed_vertices[i2][0], transformed_vertices[i2][1], transformed_vertices[i2][2],
+							transformed_vertices[i3][0], transformed_vertices[i3][1], transformed_vertices[i3][2]);
 	}
 }
 
@@ -334,7 +375,7 @@ int main(void){
 		run_ucode();
 
 		load_quad(100, t,           	   t, 0xFF0000FF);
-		load_quad(100, t + M_PI_4,  	   t, 0x00FF00FF);
+		// load_quad(100, t + M_PI_4,  	   t, 0x00FF00FF);
 
 		uint32_t split = (uint32_t) RDP_BUFFER_END;
 
@@ -342,30 +383,34 @@ int main(void){
 		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
 		run_ucode();
 
-		load_quad(100, t + M_PI_2,  	   t, 0x0000FFFF);
-		load_quad(100, t + M_3PI_4, 	   t, 0xFFFF00FF);
+		load_quad(100, t + M_PI_2,  	   t + M_PI_2, 0x0000FFFF);
+		// load_quad(100, t + M_3PI_4, 	   t, 0xFFFF00FF);
 
 		SP_DMEM[0] = split;
 		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
 		run_ucode();
 
-		commands_size = 0;
+		// commands_size = 0;
 
-		load_quad(100, t + M_PI,    	   t, 0xFF00FFFF);
-		load_quad(100, t + M_PI + M_PI_4,  t, 0x00FFFFFF);
+		// load_quad(100, t + M_PI,    	   t, 0xFF00FFFF);
+		// load_quad(100, t + M_PI + M_PI_4,  t, 0x00FFFFFF);
 
-		split = (uint32_t) RDP_BUFFER_END;
+		// split = (uint32_t) RDP_BUFFER_END;
 
-		SP_DMEM[0] = 104;
-		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
-		run_ucode();
+		// SP_DMEM[0] = 104;
+		// SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
+		// run_ucode();
 
-		load_quad(100, t + M_PI + M_PI_2,  t, 0xFF9900FF);
-		load_quad(100, t + M_PI + M_3PI_4, t, 0x9900FFFF);
+		// load_quad(100, t + M_PI + M_PI_2,  t, 0xFF9900FF);
+		// load_quad(100, t + M_PI + M_3PI_4, t, 0x9900FFFF);
 
-		SP_DMEM[0] = split;
-		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
-		run_ucode();
+		// SP_DMEM[0] = split;
+		// SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
+		// run_ucode();
+		
+		// for (size_t i = 0; i < 320 * 240; i++) {
+		// 	__safe_buffer[disp - 1][i] = __safe_buffer[disp - 1][i] & 0xF800;
+		// }
 
 		graphics_printf(disp, 200, 20, "%u", commands_size);
 		display_show(disp);
