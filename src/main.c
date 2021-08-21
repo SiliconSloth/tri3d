@@ -218,6 +218,11 @@ void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 z1,
 
 #define RADIUS 100
 
+#define PERSP_SCALE (1.0 / tanf(40.0 * M_PI / 360))
+
+#define FAR 128.0
+#define NEAR -128.0
+
 static const fixed32 vertices[8][3] = {
 	{FIXED32(-20), FIXED32(-20), FIXED32(-20)},
 	{FIXED32( 20), FIXED32(-20), FIXED32(-20)},
@@ -280,18 +285,11 @@ void load_quad(float radius, float angle, float z_angle, uint32_t color) {
 		{FIXED32(0), 			FIXED32(0), 		  FIXED32(0), FIXED32(1)}
 	};
 	
-	fixed32 translation2[4][4] = {
-		{FIXED32(1), FIXED32(0), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(1), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(0), FIXED32(1), FIXED32(0)},
-		{FIXED32(160), FIXED32(120), FIXED32(128), FIXED32(1)}
-	};
-	
 	fixed32 scaling[4][4] = {
-		{FIXED32(1), FIXED32(0), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(1), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(0), 0x7FFFFFFF / 256, FIXED32(0)},
-		{FIXED32(0), FIXED32(0), FIXED32(0), FIXED32(1)}
+		{FIXED32(PERSP_SCALE), FIXED32(0), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(PERSP_SCALE), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(0), 0x7FFFFFFF / 256, FIXED32(1.0 / 160)},
+		{FIXED32(0), FIXED32(0), 0x3FFFFFFF, FIXED32(PERSP_SCALE - NEAR / 160)}
 	};
 
 	fixed32 transformation1[4][4];
@@ -301,16 +299,13 @@ void load_quad(float radius, float angle, float z_angle, uint32_t color) {
 	matrix_mul(rotation2, transformation1, transformation2);
 	
 	fixed32 transformation3[4][4];
-	matrix_mul(translation2, transformation2, transformation3);
-	
-	fixed32 transformation4[4][4];
-	matrix_mul(scaling, transformation3, transformation4);
+	matrix_mul(scaling, transformation2, transformation3);
 
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 8; j++) {
 			fixed32 sum = FIXED32(0);
 			for (int k = 0; k < 4; k++) {
-				sum += MUL_FX32(transformation4[k][i], k == 3? FIXED32(1) : vertices[j][k]);
+				sum += MUL_FX32(transformation3[k][i], k == 3? FIXED32(1) : vertices[j][k]);
 			}
 
 			if (i < 3) {
@@ -330,9 +325,9 @@ void load_quad(float radius, float angle, float z_angle, uint32_t color) {
 		int i2 = indices[i][1];
 		int i3 = indices[i][2];
 
-		load_triangle_verts(transformed_vertices[i1][0], transformed_vertices[i1][1], transformed_vertices[i1][2],
-							transformed_vertices[i2][0], transformed_vertices[i2][1], transformed_vertices[i2][2],
-							transformed_vertices[i3][0], transformed_vertices[i3][1], transformed_vertices[i3][2]);
+		load_triangle_verts(transformed_vertices[i1][0] + FIXED32(160), transformed_vertices[i1][1] + FIXED32(120), transformed_vertices[i1][2],
+							transformed_vertices[i2][0] + FIXED32(160), transformed_vertices[i2][1] + FIXED32(120), transformed_vertices[i2][2],
+							transformed_vertices[i3][0] + FIXED32(160), transformed_vertices[i3][1] + FIXED32(120), transformed_vertices[i3][2]);
 	}
 }
 
