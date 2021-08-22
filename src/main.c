@@ -299,50 +299,22 @@ void matrix_mul(fixed32 a[4][4], fixed32 b[4][4], fixed32 out[4][4]) {
 	}
 }
 
-void load_cube(float radius, float angle, float x, float y, float z) {
+void load_cube(float x, float y, float z, fixed32 view_transform[4][4]) {
 	transform_start = timer_ticks();
 	prep_start = timer_ticks();
-
-	fixed32 translation1[4][4] = {
+	
+	fixed32 translation[4][4] = {
 		{FIXED32(1), FIXED32(0), FIXED32(0), FIXED32(0)},
 		{FIXED32(0), FIXED32(1), FIXED32(0), FIXED32(0)},
 		{FIXED32(0), FIXED32(0), FIXED32(1), FIXED32(0)},
 		{FIXED32(x), FIXED32(y), FIXED32(z), FIXED32(1)}
 	};
 
-	fixed32 rotation1[4][4] = {
-		{FIXED32(cosf(angle)),  FIXED32(sinf(angle)), FIXED32(0), FIXED32(0)},
-		{FIXED32(-sinf(angle)), FIXED32(cosf(angle)), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), 			FIXED32(0), 		  FIXED32(1), FIXED32(0)},
-		{FIXED32(0), 			FIXED32(0), 		  FIXED32(0), FIXED32(1)}
-	};
-
-	float angle2 = angle * 1.1;
-	fixed32 rotation2[4][4] = {
-		{FIXED32(1), FIXED32(0), 		     FIXED32(0),            FIXED32(0)},
-		{FIXED32(0), FIXED32(cosf(angle2)),  FIXED32(sinf(angle2)), FIXED32(0)},
-		{FIXED32(0), FIXED32(-sinf(angle2)), FIXED32(cosf(angle2)), FIXED32(0)},
-		{FIXED32(0), FIXED32(0), 		     FIXED32(0),            FIXED32(1)}
-	};
-	
-	fixed32 scaling[4][4] = {
-		{FIXED32(PERSP_SCALE), FIXED32(0), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(PERSP_SCALE), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(0), 0x7FFFFFFF / 512, FIXED32(1.0 / 160)},
-		{FIXED32(0), FIXED32(0), 0x3FFFFFFF, FIXED32(PERSP_SCALE - NEAR / 160)}
-	};
-
 	prep_time = timer_ticks() - prep_start;
 	matrix_start = timer_ticks();
 
-	fixed32 transformation1[4][4];
-	matrix_mul(rotation1, translation1, transformation1);
-	
-	fixed32 transformation2[4][4];
-	matrix_mul(rotation2, transformation1, transformation2);
-	
-	fixed32 transformation3[4][4];
-	matrix_mul(scaling, transformation2, transformation3);
+	fixed32 transformation[4][4];
+	matrix_mul(view_transform, translation, transformation);
 
 	matrix_time = timer_ticks() - matrix_start;
 	vertex_start = timer_ticks();
@@ -352,7 +324,7 @@ void load_cube(float radius, float angle, float x, float y, float z) {
 			poll_rdp();
 			fixed32 sum = FIXED32(0);
 			for (int k = 0; k < 4; k++) {
-				sum += MUL_FX32(transformation3[k][i], k == 3? FIXED32(1) : vertices[j][k]);
+				sum += MUL_FX32(transformation[k][i], k == 3? FIXED32(1) : vertices[j][k]);
 			}
 
 			if (i < 3) {
@@ -452,12 +424,40 @@ int main(void){
 
     load_ucode((void*)&tri3d_ucode_start, ucode_code_size);
     load_data((void*)&tri3d_ucode_data_start, ucode_data_size);
+	
+	fixed32 perspective[4][4] = {
+		{FIXED32(PERSP_SCALE), FIXED32(0), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(PERSP_SCALE), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(0), 0x7FFFFFFF / 512, FIXED32(1.0 / 160)},
+		{FIXED32(0), FIXED32(0), 0x3FFFFFFF, FIXED32(PERSP_SCALE - NEAR / 160)}
+	};
 
 	float t = 1.102;
 	while (1) {
 		while(!(disp = display_lock()));
 
 		t += 0.01;
+
+		fixed32 rotation1[4][4] = {
+			{FIXED32(cosf(t)),  FIXED32(sinf(t)), FIXED32(0), FIXED32(0)},
+			{FIXED32(-sinf(t)), FIXED32(cosf(t)), FIXED32(0), FIXED32(0)},
+			{FIXED32(0), 	    FIXED32(0), 	  FIXED32(1), FIXED32(0)},
+			{FIXED32(0), 		FIXED32(0), 	  FIXED32(0), FIXED32(1)}
+		};
+
+		float t2 = t * 1.1;
+		fixed32 rotation2[4][4] = {
+			{FIXED32(1), FIXED32(0), 		 FIXED32(0),        FIXED32(0)},
+			{FIXED32(0), FIXED32(cosf(t2)),  FIXED32(sinf(t2)), FIXED32(0)},
+			{FIXED32(0), FIXED32(-sinf(t2)), FIXED32(cosf(t2)), FIXED32(0)},
+			{FIXED32(0), FIXED32(0), 		 FIXED32(0),        FIXED32(1)}
+		};
+
+		fixed32 transformation1[4][4];
+		fixed32 transformation2[4][4];
+
+		matrix_mul(rotation2, rotation1, transformation1);
+		matrix_mul(perspective, transformation1, transformation2);
 
 		run_frame_setup(__safe_buffer[disp-1], &z_buffer);
 		// run_frame_setup(&z_buffer, __safe_buffer[disp-1]);
@@ -471,7 +471,7 @@ int main(void){
 		for (int z = 0; z < 4; z++) {
 			for (int y = 0; y < 4; y++) {
 				for (int x = 0; x < 4; x++) {
-					load_cube(100, t, x * 80 - 120, y * 80 - 120, z * 80 - 120);
+					load_cube(x * 80 - 120, y * 80 - 120, z * 80 - 120, transformation2);
 					if (x % 2 == 1) {
 						swap_command_buffers();
 					}
