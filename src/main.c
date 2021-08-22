@@ -5,7 +5,21 @@
 #include <math.h>
 #include <libdragon.h>
 
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)  \
+  (byte & 0x80 ? '1' : '0'), \
+  (byte & 0x40 ? '1' : '0'), \
+  (byte & 0x20 ? '1' : '0'), \
+  (byte & 0x10 ? '1' : '0'), \
+  (byte & 0x08 ? '1' : '0'), \
+  (byte & 0x04 ? '1' : '0'), \
+  (byte & 0x02 ? '1' : '0'), \
+  (byte & 0x01 ? '1' : '0') 
+
 #define TV_TYPE_LOC (*((volatile uint32_t *)0x80000300))
+
+#define DPC_END_REG (*((volatile uint32_t *)0xA4100004))
+#define DPC_CURRENT_REG	(*((volatile uint32_t *)0xA4100008))
 #define DPC_STATUS_REG (*((volatile uint32_t *)0xA410000C))
 #define SP_DMEM ((volatile uint32_t *) 0xA4000000)
 
@@ -14,6 +28,7 @@
 #define TV_TYPE_MPAL 2
 
 #define SET_XBS 2
+#define RDP_DMA 0x100
 
 extern const void tri3d_ucode_start;
 extern const void tri3d_ucode_data_start;
@@ -331,6 +346,11 @@ void load_quad(float radius, float angle, float z_angle, uint32_t color) {
 	}
 }
 
+void run_blocking() {
+	while ((DPC_STATUS_REG & RDP_DMA) != 0);
+	run_ucode();
+}
+
 int main(void){
 	static display_context_t disp = 0;
 
@@ -349,6 +369,12 @@ int main(void){
 
 	float t = 1.102;
 
+	uint32_t c[6];
+	uint32_t e[6];
+	uint32_t b[6];
+	c[0] = DPC_CURRENT_REG;
+	e[0] = DPC_END_REG;
+	b[0] = DPC_STATUS_REG;
 	while (1) {
 		while(!(disp = display_lock()));
 
@@ -367,7 +393,10 @@ int main(void){
 		SP_DMEM[1] = 104;
 
 		set_xbus();
-		run_ucode();
+		c[1] = DPC_CURRENT_REG;
+		e[1] = DPC_END_REG;
+		b[1] = DPC_STATUS_REG;
+		run_blocking();
 
 		load_quad(100, t,           	   t, 0xFF0000FF);
 		load_quad(100, t + M_PI_4,  	   t, 0x00FF00FF);
@@ -376,14 +405,20 @@ int main(void){
 
 		SP_DMEM[0] = 104;
 		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
-		run_ucode();
+		c[2] = DPC_CURRENT_REG;
+		e[2] = DPC_END_REG;
+		b[2] = DPC_STATUS_REG;
+		run_blocking();
 
 		load_quad(100, t + M_PI_2,  	   t, 0x0000FFFF);
 		load_quad(100, t + M_3PI_4, 	   t, 0xFFFF00FF);
 
 		SP_DMEM[0] = split;
 		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
-		run_ucode();
+		c[3] = DPC_CURRENT_REG;
+		e[3] = DPC_END_REG;
+		b[3] = DPC_STATUS_REG;
+		run_blocking();
 
 		commands_size = 0;
 
@@ -394,20 +429,30 @@ int main(void){
 
 		SP_DMEM[0] = 104;
 		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
-		run_ucode();
+		c[4] = DPC_CURRENT_REG;
+		e[4] = DPC_END_REG;
+		b[4] = DPC_STATUS_REG;
+		run_blocking();
 
 		load_quad(100, t + M_PI + M_PI_2,  t, 0xFF9900FF);
 		load_quad(100, t + M_PI + M_3PI_4, t, 0x9900FFFF);
 
 		SP_DMEM[0] = split;
 		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
-		run_ucode();
+		c[5] = DPC_CURRENT_REG;
+		e[5] = DPC_END_REG;
+		b[5] = DPC_STATUS_REG;
+		run_blocking();
 		
 		// for (size_t i = 0; i < 320 * 240; i++) {
 		// 	__safe_buffer[disp - 1][i] = __safe_buffer[disp - 1][i] & 0xF800;
 		// }
 
-		graphics_printf(disp, 200, 20, "%u", commands_size);
+		graphics_printf(disp, 20, 10, "                   SED BUPTGLRX");
+		for (size_t i = 0; i < 6; i++) {
+			graphics_printf(disp, 20, 20 + i * 10, "%4d   %4d   "BYTE_TO_BINARY_PATTERN" "BYTE_TO_BINARY_PATTERN, c[i], e[i],
+				BYTE_TO_BINARY(b[i] >> 8), BYTE_TO_BINARY(b[i]));
+		}
 		display_show(disp);
 	}
 }
