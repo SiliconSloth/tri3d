@@ -60,6 +60,17 @@ static uint32_t buffer_starts[] = {SETUP_BUFFER_SIZE, SETUP_BUFFER_SIZE + COMMAN
 static int current_buffer = 0;
 static uint32_t command_pointer;
 
+#define COUNTS_PER_SECOND (93750000/2)
+
+static uint64_t start_time = 0;
+static uint64_t cpu_time = 0;
+static uint64_t rdp_time = 0;
+static bool rdp_busy = false;
+
+static uint64_t total_cpu_time = 0;
+static uint64_t total_rdp_time = 0;
+static uint64_t num_samples = 0;
+
 void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 	char szBuffer[64];
 
@@ -221,6 +232,13 @@ void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 z1,
 	load_triangle(coeffs);
 }
 
+void poll_rdp() {
+	if (rdp_busy && (DPC_STATUS_REG & RDP_DMA) == 0) {
+		rdp_time = get_ticks() - start_time;
+		rdp_busy = false;
+	}
+}
+
 #define RADIUS 100
 
 #define PERSP_SCALE (1.0 / tanf(40.0 * M_PI / 360))
@@ -259,6 +277,7 @@ static fixed32 transformed_vertices[4][3];
 void matrix_mul(fixed32 a[4][4], fixed32 b[4][4], fixed32 out[4][4]) {
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
+			poll_rdp();
 			fixed32 sum = FIXED32(0);
 			for (int k = 0; k < 4; k++) {
 				sum += MUL_FX32(a[k][i], b[j][k]);
@@ -309,6 +328,7 @@ void load_cube(float radius, float angle, float x, float y, float z) {
 
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 8; j++) {
+			poll_rdp();
 			fixed32 sum = FIXED32(0);
 			for (int k = 0; k < 4; k++) {
 				sum += MUL_FX32(transformation3[k][i], k == 3? FIXED32(1) : vertices[j][k]);
@@ -334,6 +354,8 @@ void load_cube(float radius, float angle, float x, float y, float z) {
 	};
 
 	for (int i = 0; i < sizeof(indices) / sizeof(indices[0]); i++) {
+		poll_rdp();
+
 		int i1 = indices[i][0];
 		int i2 = indices[i][1];
 		int i3 = indices[i][2];
@@ -364,7 +386,14 @@ void run_frame_setup(void *color_image, void *z_image) {
 	SP_DMEM[0] = 8;
 	SP_DMEM[1] = 104;
 
+	cpu_time = get_ticks() - start_time;
 	run_blocking();
+	poll_rdp();
+	total_cpu_time += cpu_time;
+	total_rdp_time += rdp_time;
+	num_samples++;
+	start_time = get_ticks();
+	rdp_busy = true;
 
 	current_buffer = 0;
 	command_pointer = buffer_starts[current_buffer];
@@ -398,7 +427,12 @@ int main(void){
 
 	float t = 1.102;
 
+	start_time = get_ticks();
 	while (1) {
+		total_cpu_time = 0;
+		total_rdp_time = 0;
+		num_samples = 0;
+
 		while(!(disp = display_lock()));
 
 		t += 0.01;
@@ -423,8 +457,10 @@ int main(void){
 		// 	__safe_buffer[disp - 1][i] = __safe_buffer[disp - 1][i] & 0xF800;
 		// }
 
-		graphics_printf(disp, 20, 20, "%u", buffer_starts[current_buffer]);
-		graphics_printf(disp, 20, 30, "%u", command_pointer);
+		graphics_printf(disp, 20, 20, "%lu", cpu_time);
+		graphics_printf(disp, 20, 30, "%lu", rdp_time);
+		graphics_printf(disp, 20, 50, "%f", (float) total_cpu_time / COUNTS_PER_SECOND);
+		graphics_printf(disp, 20, 60, "%f", (float) total_rdp_time / COUNTS_PER_SECOND);
 		display_show(disp);
 	}
 }
