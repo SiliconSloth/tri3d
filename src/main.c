@@ -51,7 +51,7 @@ typedef struct {
 	fixed32 dzdy;
 } TriangleCoeffs;
 
-static uint16_t z_buffers[2][320 * 240];// __attribute__ ((aligned (8)));
+static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
 
 static uint32_t commands_size;
 
@@ -389,8 +389,8 @@ int main(void){
 
 		t += 0.01;
 
-		run_frame_setup(__safe_buffer[disp-1], &z_buffers[disp-1]);
-		// run_frame_setup(&z_buffers[disp-1], __safe_buffer[disp-1]);
+		run_frame_setup(__safe_buffer[disp-1], &z_buffer);
+		// run_frame_setup(&z_buffer, __safe_buffer[disp-1]);
 
 		load_cube(100, t, -120, -40, 0);
 		load_cube(100, t,  -40, -40, 0);
