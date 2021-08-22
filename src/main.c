@@ -351,6 +351,19 @@ void run_blocking() {
 	run_ucode();
 }
 
+void run_frame_setup(void *color_image, void *z_image) {
+	set_xbus();
+
+	SP_DMEM[17] = (uint32_t) color_image;
+	SP_DMEM[7] = (uint32_t) z_image;
+	SP_DMEM[9] = (uint32_t) z_image;
+
+	SP_DMEM[0] = 8;
+	SP_DMEM[1] = 104;
+
+	run_blocking();
+}
+
 int main(void){
 	static display_context_t disp = 0;
 
@@ -376,18 +389,8 @@ int main(void){
 
 		t += 0.01;
 
-		// SP_DMEM[17] = (uint32_t) &z_buffers[disp-1];
-		// SP_DMEM[7] = (uint32_t) __safe_buffer[disp-1];
-		// SP_DMEM[9] = (uint32_t) __safe_buffer[disp-1];
-		SP_DMEM[17] = (uint32_t) __safe_buffer[disp-1];
-		SP_DMEM[7] = (uint32_t) &z_buffers[disp-1];
-		SP_DMEM[9] = (uint32_t) &z_buffers[disp-1];
-
-		SP_DMEM[0] = 8;
-		SP_DMEM[1] = 104;
-
-		set_xbus();
-		run_blocking();
+		run_frame_setup(__safe_buffer[disp-1], &z_buffers[disp-1]);
+		// run_frame_setup(&z_buffers[disp-1], __safe_buffer[disp-1]);
 
 		load_cube(100, t, -120, -40, 0);
 		load_cube(100, t,  -40, -40, 0);
