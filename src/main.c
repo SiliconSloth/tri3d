@@ -76,6 +76,13 @@ static uint64_t transform_time;
 static uint64_t load_start;
 static uint64_t load_time;
 
+static uint64_t prep_start;
+static uint64_t prep_time;
+static uint64_t matrix_start;
+static uint64_t matrix_time;
+static uint64_t vertex_start;
+static uint64_t vertex_time;
+
 void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 	char szBuffer[64];
 
@@ -294,6 +301,7 @@ void matrix_mul(fixed32 a[4][4], fixed32 b[4][4], fixed32 out[4][4]) {
 
 void load_cube(float radius, float angle, float x, float y, float z) {
 	transform_start = timer_ticks();
+	prep_start = timer_ticks();
 
 	fixed32 translation1[4][4] = {
 		{FIXED32(1), FIXED32(0), FIXED32(0), FIXED32(0)},
@@ -324,6 +332,9 @@ void load_cube(float radius, float angle, float x, float y, float z) {
 		{FIXED32(0), FIXED32(0), 0x3FFFFFFF, FIXED32(PERSP_SCALE - NEAR / 160)}
 	};
 
+	prep_time = timer_ticks() - prep_start;
+	matrix_start = timer_ticks();
+
 	fixed32 transformation1[4][4];
 	matrix_mul(rotation1, translation1, transformation1);
 	
@@ -332,6 +343,9 @@ void load_cube(float radius, float angle, float x, float y, float z) {
 	
 	fixed32 transformation3[4][4];
 	matrix_mul(scaling, transformation2, transformation3);
+
+	matrix_time = timer_ticks() - matrix_start;
+	vertex_start = timer_ticks();
 
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 8; j++) {
@@ -351,6 +365,7 @@ void load_cube(float radius, float angle, float x, float y, float z) {
 		}
 	}
 
+	vertex_time = timer_ticks() - vertex_start;
 	transform_time = timer_ticks() - transform_start;
 	load_start = timer_ticks();
 
@@ -475,6 +490,9 @@ int main(void){
 		graphics_printf(disp, 20, 80, "%8lu", total_rdp_time);
 		graphics_printf(disp, 20, 100, "%8lu", transform_time);
 		graphics_printf(disp, 20, 110, "%8lu", load_time);
+		graphics_printf(disp, 20, 130, "%8lu", prep_time);
+		graphics_printf(disp, 20, 140, "%8lu", matrix_time);
+		graphics_printf(disp, 20, 150, "%8lu", vertex_time);
 		display_show(disp);
 	}
 }
