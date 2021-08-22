@@ -37,7 +37,7 @@ arch n64.rdp
 
   Sync_Pipe // Stall Pipeline, Until Preceeding Primitives Completely Finish
   Set_Color_Image IMAGE_DATA_FORMAT_RGBA,SIZE_OF_PIXEL_16B,320-1, 0 // Set Color Image: FORMAT RGBA,SIZE 16B,WIDTH 320, DRAM ADDRESS
-  Set_Fill_Color $23692369 // Set Fill Color: PACKED COLOR 16B R5G5B5A1 Pixels
+  Set_Fill_Color $48174817 // Set Fill Color: PACKED COLOR 16B R5G5B5A1 Pixels
   Fill_Rectangle 319<<2,239<<2, 0<<2,0<<2 // Fill Rectangle: XL 319.0,YL 239.0, XH 0.0,YH 0.0
 
   Set_Other_Modes SAMPLE_TYPE|BI_LERP_0|ALPHA_DITHER_SEL_NO_DITHER|B_M1A_0_2|IMAGE_READ_EN|Z_COMPARE_EN|Z_UPDATE_EN
