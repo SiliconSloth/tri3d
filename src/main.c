@@ -406,25 +406,16 @@ int main(void){
 		run_frame_setup(__safe_buffer[disp-1], &z_buffer);
 		// run_frame_setup(&z_buffer, __safe_buffer[disp-1]);
 
-		load_cube(100, t, -120, -40, 0);
-		load_cube(100, t,  -40, -40, 0);
-
-		swap_command_buffers();
-
-		load_cube(100, t,  40, -40, 0);
-		load_cube(100, t, 120, -40, 0);
-
-		swap_command_buffers();
-
-		load_cube(100, t, -120, 40, 0);
-		load_cube(100, t,  -40, 40, 0);
-
-		swap_command_buffers();
-
-		load_cube(100, t,  40, 40, 0);
-		load_cube(100, t, 120, 40, 0);
-
-		swap_command_buffers();
+		for (int y = 0; y < 4; y++) {
+			for (int y = 0; y < 4; y++) {
+				for (int x = 0; x < 4; x++) {
+					load_cube(100, t, x * 80 - 120, y * 80 - 120, 0);
+					if (x % 2 == 1) {
+						swap_command_buffers();
+					}
+				}
+			}
+		}
 		
 		// for (size_t i = 0; i < 320 * 240; i++) {
 		// 	__safe_buffer[disp - 1][i] = __safe_buffer[disp - 1][i] & 0xF800;
