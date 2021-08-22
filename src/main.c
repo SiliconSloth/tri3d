@@ -406,12 +406,14 @@ int main(void){
 		run_frame_setup(__safe_buffer[disp-1], &z_buffer);
 		// run_frame_setup(&z_buffer, __safe_buffer[disp-1]);
 
-		for (int y = 0; y < 4; y++) {
+		for (int z = 0; z < 4; z++) {
 			for (int y = 0; y < 4; y++) {
-				for (int x = 0; x < 4; x++) {
-					load_cube(100, t, x * 80 - 120, y * 80 - 120, 0);
-					if (x % 2 == 1) {
-						swap_command_buffers();
+				for (int y = 0; y < 4; y++) {
+					for (int x = 0; x < 4; x++) {
+						load_cube(100, t, x * 80 - 120, y * 80 - 120, z * 80 - 120);
+						if (x % 2 == 1) {
+							swap_command_buffers();
+						}
 					}
 				}
 			}
