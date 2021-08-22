@@ -53,9 +53,12 @@ typedef struct {
 
 static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
 
-static uint32_t commands_size;
+#define SETUP_BUFFER_SIZE 200
+#define COMMAND_BUFFER_SIZE 1800
 
-#define RDP_BUFFER_END ((volatile uint32_t *) (104 + commands_size))
+static uint32_t buffer_starts[] = {SETUP_BUFFER_SIZE, SETUP_BUFFER_SIZE + COMMAND_BUFFER_SIZE};
+static int current_buffer = 0;
+static uint32_t command_pointer;
 
 void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 	char szBuffer[64];
@@ -77,7 +80,7 @@ void set_xbus() {
 }
 
 void load_triangle(TriangleCoeffs coeffs) {
-	volatile uint32_t *command = SP_DMEM + (uint32_t) RDP_BUFFER_END / sizeof(uint32_t);
+	volatile uint32_t *command = SP_DMEM + command_pointer / sizeof(uint32_t);
 
 	command[0] = 0x9000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
 	command[1] = ((coeffs.ym & 0xFFFFC000) << 2) | ((uint32_t) coeffs.yh >> 14);
@@ -99,25 +102,25 @@ void load_triangle(TriangleCoeffs coeffs) {
 	command[2] = coeffs.dzde;
 	command[3] = coeffs.dzdy;
 
-	commands_size += 48;
+	command_pointer += 48;
 }
 
 void load_color(uint32_t color) {
-	volatile uint32_t *command = SP_DMEM + (uint32_t) RDP_BUFFER_END / sizeof(uint32_t);
+	volatile uint32_t *command = SP_DMEM + command_pointer / sizeof(uint32_t);
 
 	command[0] = 0x39000000;
 	command[1] = color;
 
-	commands_size += 8;
+	command_pointer += 8;
 }
 
 void load_sync() {
-	volatile uint32_t *command = SP_DMEM + (uint32_t) RDP_BUFFER_END / sizeof(uint32_t);
+	volatile uint32_t *command = SP_DMEM + command_pointer / sizeof(uint32_t);
 
 	command[0] = 0x27000000;
 	command[1] = 0;
 
-	commands_size += 8;
+	command_pointer += 8;
 }
 
 void compute_triangle_coefficients(TriangleCoeffs *coeffs,
@@ -362,6 +365,19 @@ void run_frame_setup(void *color_image, void *z_image) {
 	SP_DMEM[1] = 104;
 
 	run_blocking();
+
+	current_buffer = 0;
+	command_pointer = buffer_starts[current_buffer];
+}
+
+void swap_command_buffers() {
+	SP_DMEM[0] = buffer_starts[current_buffer];
+	SP_DMEM[1] = command_pointer;
+
+	run_blocking();
+
+	current_buffer = 1 - current_buffer;
+	command_pointer = buffer_starts[current_buffer];
 }
 
 int main(void){
@@ -385,8 +401,6 @@ int main(void){
 	while (1) {
 		while(!(disp = display_lock()));
 
-		commands_size = 0;
-
 		t += 0.01;
 
 		run_frame_setup(__safe_buffer[disp-1], &z_buffer);
@@ -395,42 +409,29 @@ int main(void){
 		load_cube(100, t, -120, -40, 0);
 		load_cube(100, t,  -40, -40, 0);
 
-		uint32_t split = (uint32_t) RDP_BUFFER_END;
-
-		SP_DMEM[0] = 104;
-		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
-		run_blocking();
+		swap_command_buffers();
 
 		load_cube(100, t,  40, -40, 0);
 		load_cube(100, t, 120, -40, 0);
 
-		SP_DMEM[0] = split;
-		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
-		run_blocking();
-
-		commands_size = 0;
+		swap_command_buffers();
 
 		load_cube(100, t, -120, 40, 0);
 		load_cube(100, t,  -40, 40, 0);
 
-		split = (uint32_t) RDP_BUFFER_END;
-
-		SP_DMEM[0] = 104;
-		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
-		run_blocking();
+		swap_command_buffers();
 
 		load_cube(100, t,  40, 40, 0);
 		load_cube(100, t, 120, 40, 0);
 
-		SP_DMEM[0] = split;
-		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
-		run_blocking();
+		swap_command_buffers();
 		
 		// for (size_t i = 0; i < 320 * 240; i++) {
 		// 	__safe_buffer[disp - 1][i] = __safe_buffer[disp - 1][i] & 0xF800;
 		// }
 
-		graphics_printf(disp, 20, 10, "                   SED BUPTGLRX");
+		graphics_printf(disp, 20, 20, "%u", buffer_starts[current_buffer]);
+		graphics_printf(disp, 20, 30, "%u", command_pointer);
 		display_show(disp);
 	}
 }
