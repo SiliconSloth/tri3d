@@ -265,12 +265,12 @@ void matrix_mul(fixed32 a[4][4], fixed32 b[4][4], fixed32 out[4][4]) {
 	}
 }
 
-void load_quad(float radius, float angle, float z_angle, uint32_t color) {
+void load_cube(float radius, float angle, float x, float y, float z) {
 	fixed32 translation1[4][4] = {
 		{FIXED32(1), FIXED32(0), FIXED32(0), FIXED32(0)},
 		{FIXED32(0), FIXED32(1), FIXED32(0), FIXED32(0)},
 		{FIXED32(0), FIXED32(0), FIXED32(1), FIXED32(0)},
-		{FIXED32(RADIUS), FIXED32(0), FIXED32(0), FIXED32(1)}
+		{FIXED32(x), FIXED32(y), FIXED32(z), FIXED32(1)}
 	};
 
 	fixed32 rotation1[4][4] = {
@@ -280,17 +280,18 @@ void load_quad(float radius, float angle, float z_angle, uint32_t color) {
 		{FIXED32(0), 			FIXED32(0), 		  FIXED32(0), FIXED32(1)}
 	};
 
+	float angle2 = angle * 1.1;
 	fixed32 rotation2[4][4] = {
-		{FIXED32(1), 			FIXED32(0), 		  FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(cosf(z_angle)),  FIXED32(sinf(z_angle)), FIXED32(0)},
-		{FIXED32(0), FIXED32(-sinf(z_angle)), FIXED32(cosf(z_angle)), FIXED32(0)},
-		{FIXED32(0), 			FIXED32(0), 		  FIXED32(0), FIXED32(1)}
+		{FIXED32(1), FIXED32(0), 		     FIXED32(0),            FIXED32(0)},
+		{FIXED32(0), FIXED32(cosf(angle2)),  FIXED32(sinf(angle2)), FIXED32(0)},
+		{FIXED32(0), FIXED32(-sinf(angle2)), FIXED32(cosf(angle2)), FIXED32(0)},
+		{FIXED32(0), FIXED32(0), 		     FIXED32(0),            FIXED32(1)}
 	};
 	
 	fixed32 scaling[4][4] = {
 		{FIXED32(PERSP_SCALE), FIXED32(0), FIXED32(0), FIXED32(0)},
 		{FIXED32(0), FIXED32(PERSP_SCALE), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(0), 0x7FFFFFFF / 256, FIXED32(1.0 / 160)},
+		{FIXED32(0), FIXED32(0), 0x7FFFFFFF / 512, FIXED32(1.0 / 160)},
 		{FIXED32(0), FIXED32(0), 0x3FFFFFFF, FIXED32(PERSP_SCALE - NEAR / 160)}
 	};
 
@@ -320,12 +321,24 @@ void load_quad(float radius, float angle, float z_angle, uint32_t color) {
 		}
 	}
 
-	load_sync();
-	load_color(color);
+	uint32_t colors[6] = {
+		0xFF0000FF,
+		0x00FF00FF,
+		0x0000FFFF,
+		0xFFFF00FF,
+		0xFF00FFFF,
+		0x00FFFFFF
+	};
+
 	for (int i = 0; i < sizeof(indices) / sizeof(indices[0]); i++) {
 		int i1 = indices[i][0];
 		int i2 = indices[i][1];
 		int i3 = indices[i][2];
+
+		if (i % 2 == 0) {
+			load_sync();
+			load_color(colors[i / 2]);
+		}
 
 		load_triangle_verts(transformed_vertices[i1][0] + FIXED32(160), transformed_vertices[i1][1] + FIXED32(120), transformed_vertices[i1][2],
 							transformed_vertices[i2][0] + FIXED32(160), transformed_vertices[i2][1] + FIXED32(120), transformed_vertices[i2][2],
@@ -376,8 +389,8 @@ int main(void){
 		set_xbus();
 		run_blocking();
 
-		load_quad(100, t,           	   t, 0xFF0000FF);
-		load_quad(100, t + M_PI_4,  	   t, 0x00FF00FF);
+		load_cube(100, t, -120, -40, 0);
+		load_cube(100, t,  -40, -40, 0);
 
 		uint32_t split = (uint32_t) RDP_BUFFER_END;
 
@@ -385,8 +398,8 @@ int main(void){
 		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
 		run_blocking();
 
-		load_quad(100, t + M_PI_2,  	   t, 0x0000FFFF);
-		load_quad(100, t + M_3PI_4, 	   t, 0xFFFF00FF);
+		load_cube(100, t,  40, -40, 0);
+		load_cube(100, t, 120, -40, 0);
 
 		SP_DMEM[0] = split;
 		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
@@ -394,8 +407,8 @@ int main(void){
 
 		commands_size = 0;
 
-		load_quad(100, t + M_PI,    	   t, 0xFF00FFFF);
-		load_quad(100, t + M_PI + M_PI_4,  t, 0x00FFFFFF);
+		load_cube(100, t, -120, 40, 0);
+		load_cube(100, t,  -40, 40, 0);
 
 		split = (uint32_t) RDP_BUFFER_END;
 
@@ -403,8 +416,8 @@ int main(void){
 		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
 		run_blocking();
 
-		load_quad(100, t + M_PI + M_PI_2,  t, 0xFF9900FF);
-		load_quad(100, t + M_PI + M_3PI_4, t, 0x9900FFFF);
+		load_cube(100, t,  40, 40, 0);
+		load_cube(100, t, 120, 40, 0);
 
 		SP_DMEM[0] = split;
 		SP_DMEM[1] = (uint32_t) RDP_BUFFER_END;
