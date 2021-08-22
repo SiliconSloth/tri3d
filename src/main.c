@@ -71,6 +71,11 @@ static uint64_t total_cpu_time = 0;
 static uint64_t total_rdp_time = 0;
 static uint64_t num_samples = 0;
 
+static uint64_t transform_start;
+static uint64_t transform_time;
+static uint64_t load_start;
+static uint64_t load_time;
+
 void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 	char szBuffer[64];
 
@@ -234,7 +239,7 @@ void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 z1,
 
 void poll_rdp() {
 	if (rdp_busy && (DPC_STATUS_REG & RDP_DMA) == 0) {
-		rdp_time = get_ticks() - start_time;
+		rdp_time = timer_ticks() - start_time;
 		rdp_busy = false;
 	}
 }
@@ -288,6 +293,8 @@ void matrix_mul(fixed32 a[4][4], fixed32 b[4][4], fixed32 out[4][4]) {
 }
 
 void load_cube(float radius, float angle, float x, float y, float z) {
+	transform_start = timer_ticks();
+
 	fixed32 translation1[4][4] = {
 		{FIXED32(1), FIXED32(0), FIXED32(0), FIXED32(0)},
 		{FIXED32(0), FIXED32(1), FIXED32(0), FIXED32(0)},
@@ -344,6 +351,9 @@ void load_cube(float radius, float angle, float x, float y, float z) {
 		}
 	}
 
+	transform_time = timer_ticks() - transform_start;
+	load_start = timer_ticks();
+
 	uint32_t colors[6] = {
 		0xFF0000FF,
 		0x00FF00FF,
@@ -369,6 +379,8 @@ void load_cube(float radius, float angle, float x, float y, float z) {
 							transformed_vertices[i2][0] + FIXED32(160), transformed_vertices[i2][1] + FIXED32(120), transformed_vertices[i2][2],
 							transformed_vertices[i3][0] + FIXED32(160), transformed_vertices[i3][1] + FIXED32(120), transformed_vertices[i3][2]);
 	}
+
+	load_time = timer_ticks() - load_start;
 }
 
 void run_blocking() {
@@ -386,14 +398,7 @@ void run_frame_setup(void *color_image, void *z_image) {
 	SP_DMEM[0] = 8;
 	SP_DMEM[1] = 104;
 
-	cpu_time = get_ticks() - start_time;
 	run_blocking();
-	poll_rdp();
-	total_cpu_time += cpu_time;
-	total_rdp_time += rdp_time;
-	num_samples++;
-	start_time = get_ticks();
-	rdp_busy = true;
 
 	current_buffer = 0;
 	command_pointer = buffer_starts[current_buffer];
@@ -403,7 +408,14 @@ void swap_command_buffers() {
 	SP_DMEM[0] = buffer_starts[current_buffer];
 	SP_DMEM[1] = command_pointer;
 
+	cpu_time = timer_ticks() - start_time;
 	run_blocking();
+	poll_rdp();
+	total_cpu_time += cpu_time;
+	total_rdp_time += rdp_time;
+	num_samples++;
+	start_time = timer_ticks();
+	rdp_busy = true;
 
 	current_buffer = 1 - current_buffer;
 	command_pointer = buffer_starts[current_buffer];
@@ -418,6 +430,7 @@ int main(void){
 	display_init(RESOLUTION_320x240, DEPTH_16_BPP, 2, GAMMA_NONE, ANTIALIAS_RESAMPLE);
 	controller_init();
 	rsp_init();
+	timer_init();
 	
     unsigned long ucode_code_size = &tri3d_ucode_data_start - &tri3d_ucode_start;
     unsigned long ucode_data_size = &tri3d_ucode_end - &tri3d_ucode_data_start;
@@ -426,19 +439,19 @@ int main(void){
     load_data((void*)&tri3d_ucode_data_start, ucode_data_size);
 
 	float t = 1.102;
-
-	start_time = get_ticks();
 	while (1) {
-		total_cpu_time = 0;
-		total_rdp_time = 0;
-		num_samples = 0;
-
 		while(!(disp = display_lock()));
 
 		t += 0.01;
 
 		run_frame_setup(__safe_buffer[disp-1], &z_buffer);
 		// run_frame_setup(&z_buffer, __safe_buffer[disp-1]);
+		
+		total_cpu_time = 0;
+		total_rdp_time = 0;
+		num_samples = 0;
+		start_time = timer_ticks();
+		rdp_busy = true;
 
 		for (int z = 0; z < 4; z++) {
 			for (int y = 0; y < 4; y++) {
@@ -455,10 +468,13 @@ int main(void){
 		// 	__safe_buffer[disp - 1][i] = __safe_buffer[disp - 1][i] & 0xF800;
 		// }
 
-		graphics_printf(disp, 20, 20, "%lu", cpu_time);
-		graphics_printf(disp, 20, 30, "%lu", rdp_time);
-		graphics_printf(disp, 20, 50, "%f", (float) total_cpu_time / COUNTS_PER_SECOND);
-		graphics_printf(disp, 20, 60, "%f", (float) total_rdp_time / COUNTS_PER_SECOND);
+		graphics_printf(disp, 20, 20, "%u", COUNTS_PER_SECOND / total_cpu_time);
+		graphics_printf(disp, 20, 40, "%8lu", cpu_time);
+		graphics_printf(disp, 20, 50, "%8lu", rdp_time);
+		graphics_printf(disp, 20, 70, "%8lu", total_cpu_time);
+		graphics_printf(disp, 20, 80, "%8lu", total_rdp_time);
+		graphics_printf(disp, 20, 100, "%8lu", transform_time);
+		graphics_printf(disp, 20, 110, "%8lu", load_time);
 		display_show(disp);
 	}
 }
