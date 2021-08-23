@@ -45,6 +45,22 @@ typedef struct {
 	fixed32 xm;
 	fixed32 dxmdy;
 
+	fixed32 red;
+	fixed32 green;
+	fixed32 blue;
+
+	fixed32 drdx;
+	fixed32 dgdx;
+	fixed32 dbdx;
+
+	fixed32 drde;
+	fixed32 dgde;
+	fixed32 dbde;
+
+	fixed32 drdy;
+	fixed32 dgdy;
+	fixed32 dbdy;
+
 	fixed32 z;
 	fixed32 dzdx;
 	fixed32 dzde;
@@ -105,7 +121,7 @@ void set_xbus() {
 void load_triangle(TriangleCoeffs coeffs) {
 	volatile uint32_t *command = SP_DMEM + command_pointer / sizeof(uint32_t);
 
-	command[0] = 0x9000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
+	command[0] = 0xD000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
 	command[1] = ((coeffs.ym & 0xFFFFC000) << 2) | ((uint32_t) coeffs.yh >> 14);
 
 	command[2] = coeffs.xl;
@@ -119,13 +135,39 @@ void load_triangle(TriangleCoeffs coeffs) {
 
 	command += 8;
 
+	command[0] = (coeffs.red & 0xFFFF0000) | (coeffs.green >> 16);
+	command[1] = coeffs.blue & 0xFFFF0000;
+
+	command[2] = (coeffs.drdx & 0xFFFF0000) | (coeffs.dgdx >> 16);
+	command[3] = coeffs.dbdx & 0xFFFF0000;
+
+	command[4] = (coeffs.red << 16) | (coeffs.green & 0xFFFF);
+	command[5] = coeffs.blue << 16;
+
+	command[6] = (coeffs.drdx << 16) | (coeffs.dgdx & 0xFFFF);
+	command[7] = coeffs.dbdx << 16;
+
+	command[8] = (coeffs.drde & 0xFFFF0000) | (coeffs.dgde >> 16);
+	command[9] = coeffs.dbde & 0xFFFF0000;
+
+	command[10] = (coeffs.drdy & 0xFFFF0000) | (coeffs.dgdy >> 16);
+	command[11] = coeffs.dbdy & 0xFFFF0000;
+
+	command[12] = (coeffs.drde << 16) | (coeffs.dgde & 0xFFFF);
+	command[13] = coeffs.dbde << 16;
+
+	command[14] = (coeffs.drdy << 16) | (coeffs.dgdy & 0xFFFF);
+	command[15] = coeffs.dbdy << 16;
+
+	command += 16;
+
 	command[0] = coeffs.z;
 	command[1] = coeffs.dzdx;
 
 	command[2] = coeffs.dzde;
 	command[3] = coeffs.dzdy;
 
-	command_pointer += 48;
+	command_pointer += 112;
 }
 
 void load_color(uint32_t color) {
@@ -229,6 +271,22 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs,
 
 	coeffs->xm = xm;
 	coeffs->dxmdy = dxmdy;
+
+	coeffs->red = FIXED32(256);
+	coeffs->green = FIXED32(256);
+	coeffs->blue = FIXED32(0);
+
+	coeffs->drdx = FIXED32(0);
+	coeffs->dgdx = FIXED32(16);
+	coeffs->dbdx = FIXED32(8);
+
+	coeffs->drde = FIXED32(0);
+	coeffs->dgde = FIXED32(16);
+	coeffs->dbde = FIXED32(8);
+
+	coeffs->drdy = FIXED32(0);
+	coeffs->dgdy = FIXED32(0);
+	coeffs->dbdy = FIXED32(8);
 
 	coeffs->z = z1;
 	coeffs->dzdx = dzdx;
@@ -341,14 +399,14 @@ void load_cube(float x, float y, float z, fixed32 view_transform[4][4]) {
 	transform_time = timer_ticks() - transform_start;
 	load_start = timer_ticks();
 
-	uint32_t colors[6] = {
-		0xFF0000FF,
-		0x00FF00FF,
-		0x0000FFFF,
-		0xFFFF00FF,
-		0xFF00FFFF,
-		0x00FFFFFF
-	};
+	// uint32_t colors[6] = {
+	// 	0xFF0000FF,
+	// 	0x00FF00FF,
+	// 	0x0000FFFF,
+	// 	0xFFFF00FF,
+	// 	0xFF00FFFF,
+	// 	0x00FFFFFF
+	// };
 
 	for (int i = 0; i < sizeof(indices) / sizeof(indices[0]); i++) {
 		poll_rdp();
@@ -357,10 +415,10 @@ void load_cube(float x, float y, float z, fixed32 view_transform[4][4]) {
 		int i2 = indices[i][1];
 		int i3 = indices[i][2];
 
-		if (i % 2 == 0) {
-			load_sync();
-			load_color(colors[i / 2]);
-		}
+		// if (i % 2 == 0) {
+		// 	load_sync();
+		// // 	load_color(colors[i / 2]);
+		// }
 
 		load_triangle_verts(transformed_vertices[i1][0] + FIXED32(160), transformed_vertices[i1][1] + FIXED32(120), transformed_vertices[i1][2],
 							transformed_vertices[i2][0] + FIXED32(160), transformed_vertices[i2][1] + FIXED32(120), transformed_vertices[i2][2],
@@ -472,9 +530,7 @@ int main(void){
 			for (int y = 0; y < 4; y++) {
 				for (int x = 0; x < 4; x++) {
 					load_cube(x * 80 - 120, y * 80 - 120, z * 80 - 120, transformation2);
-					if (x % 2 == 1) {
-						swap_command_buffers();
-					}
+					swap_command_buffers();
 				}
 			}
 		}
