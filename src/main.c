@@ -198,6 +198,18 @@ void load_sync() {
 	command_pointer += 8;
 }
 
+void compute_gradients(fixed32 y1, fixed32 a1,
+					   fixed32 y2, fixed32 a2,
+					   fixed32 y3, fixed32 a3,
+					   fixed32 x2, fixed32 x_mid,
+					   fixed32 *dade, fixed32 *dadx) {
+	*dade = (y3 - y1 < FIXED32(1)) ? 0 : DIV_FX32(a3 - a1, y3 - y1);
+
+	fixed32 a_mid = a1 + MUL_FX32(y2 - y1, *dade);
+
+	*dadx = (x2 - x_mid < FIXED32(1) && x_mid - x2 < FIXED32(1)) ? 0 : DIV_FX32(a2 - a_mid, x2 - x_mid);
+}
+
 void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, VertexInfo v2, VertexInfo v3) {
 	VertexInfo temp;
 	
@@ -236,12 +248,17 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 
 	bool major = MUL_FX32((x3 - x1), (y2 - y1)) - MUL_FX32((y3 - y1), (x2 - x1)) < 0;
 
-	fixed32 dzde = (y3 - y1 < FIXED32(1)) ? 0 : DIV_FX32(z3 - z1, y3 - y1);
-
 	fixed32 x_mid = x1 + MUL_FX32(y2 - y1, dxhdy);
-	fixed32 z_mid = z1 + MUL_FX32(y2 - y1, dzde);
 
-	fixed32 dzdx = (x2 - x_mid < FIXED32(1) && x_mid - x2 < FIXED32(1)) ? 0 : DIV_FX32(z2 - z_mid, x2 - x_mid);
+	fixed32 drde, dgde, dbde;
+	fixed32 drdx, dgdx, dbdx;
+	compute_gradients(y1, v1.r, y2, v2.r, y3, v3.r, x2, x_mid, &drde, &drdx);
+	compute_gradients(y1, v1.g, y2, v2.g, y3, v3.g, x2, x_mid, &dgde, &dgdx);
+	compute_gradients(y1, v1.b, y2, v2.b, y3, v3.b, x2, x_mid, &dbde, &dbdx);
+
+	fixed32 dzde;
+	fixed32 dzdx;
+	compute_gradients(y1, z1, y2, z2, y3, z3, x2, x_mid, &dzde, &dzdx);
 
 	coeffs->major = major;
 
@@ -263,17 +280,17 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	coeffs->green = v1.g;
 	coeffs->blue  = v1.b;
 
-	coeffs->drdx = FIXED32(0);
-	coeffs->dgdx = FIXED32(16);
-	coeffs->dbdx = FIXED32(8);
+	coeffs->drdx = drdx;
+	coeffs->dgdx = dgdx;
+	coeffs->dbdx = dbdx;
 
-	coeffs->drde = FIXED32(0);
-	coeffs->dgde = FIXED32(16);
-	coeffs->dbde = FIXED32(8);
+	coeffs->drde = drde;
+	coeffs->dgde = dgde;
+	coeffs->dbde = dbde;
 
-	coeffs->drdy = FIXED32(0);
-	coeffs->dgdy = FIXED32(0);
-	coeffs->dbdy = FIXED32(8);
+	coeffs->drdy = 0;
+	coeffs->dgdy = 0;
+	coeffs->dbdy = 0;
 
 	coeffs->z = z1;
 	coeffs->dzdx = dzdx;
