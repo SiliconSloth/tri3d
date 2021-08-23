@@ -67,6 +67,16 @@ typedef struct {
 	fixed32 dzdy;
 } TriangleCoeffs;
 
+typedef struct {
+	fixed32 x;
+	fixed32 y;
+	fixed32 z;
+
+	fixed32 r;
+	fixed32 g;
+	fixed32 b;
+} VertexInfo;
+
 static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
 
 #define SETUP_BUFFER_SIZE 200
@@ -188,53 +198,30 @@ void load_sync() {
 	command_pointer += 8;
 }
 
-void compute_triangle_coefficients(TriangleCoeffs *coeffs,
-						fixed32 x1, fixed32 y1, fixed32 z1,
-						fixed32 x2, fixed32 y2, fixed32 z2,
-						fixed32 x3, fixed32 y3, fixed32 z3) {
-	fixed32 temp_x, temp_y, temp_z;
+void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, VertexInfo v2, VertexInfo v3) {
+	VertexInfo temp;
 	
-	if (y1 > y2) {
-		temp_x = x1;
-		x1 = x2;
-		x2 = temp_x;
-
-		temp_y = y1;
-		y1 = y2;
-		y2 = temp_y;
-
-		temp_z = z1;
-		z1 = z2;
-		z2 = temp_z;
+	if (v1.y > v2.y) {
+		temp = v1;
+		v1 = v2;
+		v2 = temp;
 	}
 	
-	if (y2 > y3) {
-		temp_x = x2;
-		x2 = x3;
-		x3 = temp_x;
+	if (v2.y > v3.y) {
+		temp = v2;
+		v2 = v3;
+		v3 = temp;
 
-		temp_y = y2;
-		y2 = y3;
-		y3 = temp_y;
-
-		temp_z = z2;
-		z2 = z3;
-		z3 = temp_z;
-
-		if (y1 > y2) {
-			temp_x = x1;
-			x1 = x2;
-			x2 = temp_x;
-
-			temp_y = y1;
-			y1 = y2;
-			y2 = temp_y;
-
-			temp_z = z1;
-			z1 = z2;
-			z2 = temp_z;
+		if (v1.y > v2.y) {
+			temp = v1;
+			v1 = v2;
+			v2 = temp;
 		}
 	}
+
+	fixed32 x1 = v1.x, y1 = v1.y, z1 = v1.z;
+	fixed32 x2 = v2.x, y2 = v2.y, z2 = v2.z;
+	fixed32 x3 = v3.x, y3 = v3.y, z3 = v3.z;
 
 	fixed32 dxldy = (y3 - y2 < FIXED32(1)) ? 0 : DIV_FX32(x3 - x2, y3 - y2);
 	fixed32 dxmdy = (y2 - y1 < FIXED32(1)) ? 0 : DIV_FX32(x2 - x1, y2 - y1);
@@ -272,9 +259,9 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs,
 	coeffs->xm = xm;
 	coeffs->dxmdy = dxmdy;
 
-	coeffs->red = FIXED32(256);
-	coeffs->green = FIXED32(256);
-	coeffs->blue = FIXED32(0);
+	coeffs->red   = v1.r;
+	coeffs->green = v1.g;
+	coeffs->blue  = v1.b;
 
 	coeffs->drdx = FIXED32(0);
 	coeffs->dgdx = FIXED32(16);
@@ -297,8 +284,12 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs,
 void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 z1,
 						 fixed32 x2, fixed32 y2, fixed32 z2,
 						 fixed32 x3, fixed32 y3, fixed32 z3) {
+	VertexInfo v1 = {x1, y1, z1, FIXED32(256), FIXED32(0), FIXED32(0)};
+	VertexInfo v2 = {x2, y2, z2, FIXED32(0), FIXED32(256), FIXED32(0)};
+	VertexInfo v3 = {x3, y3, z3, FIXED32(0), FIXED32(0), FIXED32(256)};
+
 	TriangleCoeffs coeffs;
-	compute_triangle_coefficients(&coeffs, x1, y1, z1, x2, y2, z2, x3, y3, z3);
+	compute_triangle_coefficients(&coeffs, v1, v2, v3);
 	load_triangle(coeffs);
 }
 
