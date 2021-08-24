@@ -429,20 +429,20 @@ void load_cube(float x, float y, float z, fixed32 view_transform[4][4]) {
 		int i3 = indices[i][2];
 
 		VertexInfo v1 = {
-			transformed_vertices[i1][0] + FIXED32(160),
-			transformed_vertices[i1][1] + FIXED32(120),
+			transformed_vertices[i1][0],
+			transformed_vertices[i1][1],
 			transformed_vertices[i1][2],
 			vertex_colors[i1][0], vertex_colors[i1][1], vertex_colors[i1][2]};
 			
 		VertexInfo v2 = {
-			transformed_vertices[i2][0] + FIXED32(160),
-			transformed_vertices[i2][1] + FIXED32(120),
+			transformed_vertices[i2][0],
+			transformed_vertices[i2][1],
 			transformed_vertices[i2][2],
 			vertex_colors[i2][0], vertex_colors[i2][1], vertex_colors[i2][2]};
 
 		VertexInfo v3 = {
-			transformed_vertices[i3][0] + FIXED32(160),
-			transformed_vertices[i3][1] + FIXED32(120),
+			transformed_vertices[i3][0],
+			transformed_vertices[i3][1],
 			transformed_vertices[i3][2],
 			vertex_colors[i3][0], vertex_colors[i3][1], vertex_colors[i3][2]};
 
@@ -518,6 +518,16 @@ int main(void){
 		{FIXED32(0), FIXED32(0), 0x7FFFFFFF / 512, FIXED32(1.0 / 160)},
 		{FIXED32(0), FIXED32(0), 0x3FFFFFFF, FIXED32(PERSP_SCALE - NEAR / 160)}
 	};
+	
+	fixed32 translation[4][4] = {
+		{FIXED32(1), FIXED32(0), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(1), FIXED32(0), FIXED32(0)},
+		{FIXED32(0), FIXED32(0), FIXED32(1), FIXED32(0)},
+		{FIXED32(160), FIXED32(120), FIXED32(0), FIXED32(1)}
+	};
+
+	fixed32 view_transform[4][4];
+	matrix_mul(translation, perspective, view_transform);
 
 	float t = 1.102;
 	while (1) {
@@ -544,7 +554,7 @@ int main(void){
 		fixed32 transformation2[4][4];
 
 		matrix_mul(rotation2, rotation1, transformation1);
-		matrix_mul(perspective, transformation1, transformation2);
+		matrix_mul(view_transform, transformation1, transformation2);
 
 		run_frame_setup(__safe_buffer[disp-1], &z_buffer);
 		// run_frame_setup(&z_buffer, __safe_buffer[disp-1]);
