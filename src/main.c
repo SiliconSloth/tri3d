@@ -145,29 +145,29 @@ void load_triangle(TriangleCoeffs coeffs) {
 
 	command += 8;
 
-	command[0] = (coeffs.red & 0xFFFF0000) | (coeffs.green >> 16);
+	command[0] = (coeffs.red & 0xFFFF0000) | ((uint32_t) coeffs.green >> 16);
 	command[1] = coeffs.blue & 0xFFFF0000;
 
-	command[2] = (coeffs.drdx & 0xFFFF0000) | (coeffs.dgdx >> 16);
+	command[2] = (coeffs.drdx & 0xFFFF0000) | ((uint32_t) coeffs.dgdx >> 16);
 	command[3] = coeffs.dbdx & 0xFFFF0000;
 
-	command[4] = (coeffs.red << 16) | (coeffs.green & 0xFFFF);
-	command[5] = coeffs.blue << 16;
+	command[4] = ((uint32_t) coeffs.red << 16) | ((uint32_t) coeffs.green & 0xFFFF);
+	command[5] = (uint32_t) coeffs.blue << 16;
 
-	command[6] = (coeffs.drdx << 16) | (coeffs.dgdx & 0xFFFF);
-	command[7] = coeffs.dbdx << 16;
+	command[6] = ((uint32_t) coeffs.drdx << 16) | ((uint32_t) coeffs.dgdx & 0xFFFF);
+	command[7] = (uint32_t) coeffs.dbdx << 16;
 
-	command[8] = (coeffs.drde & 0xFFFF0000) | (coeffs.dgde >> 16);
+	command[8] = (coeffs.drde & 0xFFFF0000) | ((uint32_t) coeffs.dgde >> 16);
 	command[9] = coeffs.dbde & 0xFFFF0000;
 
-	command[10] = (coeffs.drdy & 0xFFFF0000) | (coeffs.dgdy >> 16);
+	command[10] = (coeffs.drdy & 0xFFFF0000) | ((uint32_t) coeffs.dgdy >> 16);
 	command[11] = coeffs.dbdy & 0xFFFF0000;
 
-	command[12] = (coeffs.drde << 16) | (coeffs.dgde & 0xFFFF);
-	command[13] = coeffs.dbde << 16;
+	command[12] = ((uint32_t) coeffs.drde << 16) | (coeffs.dgde & 0xFFFF);
+	command[13] = (uint32_t) coeffs.dbde << 16;
 
-	command[14] = (coeffs.drdy << 16) | (coeffs.dgdy & 0xFFFF);
-	command[15] = coeffs.dbdy << 16;
+	command[14] = ((uint32_t) coeffs.drdy << 16) | (coeffs.dgdy & 0xFFFF);
+	command[15] = (uint32_t) coeffs.dbdy << 16;
 
 	command += 16;
 
