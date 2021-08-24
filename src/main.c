@@ -298,13 +298,7 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	coeffs->dzdy = 0;
 }
 
-void load_triangle_verts(fixed32 x1, fixed32 y1, fixed32 z1,
-						 fixed32 x2, fixed32 y2, fixed32 z2,
-						 fixed32 x3, fixed32 y3, fixed32 z3) {
-	VertexInfo v1 = {x1, y1, z1, FIXED32(256), FIXED32(0), FIXED32(0)};
-	VertexInfo v2 = {x2, y2, z2, FIXED32(0), FIXED32(256), FIXED32(0)};
-	VertexInfo v3 = {x3, y3, z3, FIXED32(0), FIXED32(0), FIXED32(256)};
-
+void load_triangle_verts(VertexInfo v1, VertexInfo v2, VertexInfo v3) {
 	TriangleCoeffs coeffs;
 	compute_triangle_coefficients(&coeffs, v1, v2, v3);
 	load_triangle(coeffs);
@@ -333,6 +327,17 @@ static const fixed32 vertices[8][3] = {
 	{FIXED32( 20), FIXED32(-20), FIXED32( 20)},
 	{FIXED32( 20), FIXED32( 20), FIXED32( 20)},
 	{FIXED32(-20), FIXED32( 20), FIXED32( 20)}
+};
+
+static const fixed32 vertex_colors[8][3] = {
+	{FIXED32(  0), FIXED32(  0), FIXED32(  0)},
+	{FIXED32(256), FIXED32(  0), FIXED32(  0)},
+	{FIXED32(256), FIXED32(256), FIXED32(  0)},
+	{FIXED32(  0), FIXED32(256), FIXED32(  0)},
+	{FIXED32(  0), FIXED32(  0), FIXED32(256)},
+	{FIXED32(256), FIXED32(  0), FIXED32(256)},
+	{FIXED32(256), FIXED32(256), FIXED32(256)},
+	{FIXED32(  0), FIXED32(256), FIXED32(256)}
 };
 
 static const int indices[12][3] = {
@@ -423,14 +428,30 @@ void load_cube(float x, float y, float z, fixed32 view_transform[4][4]) {
 		int i2 = indices[i][1];
 		int i3 = indices[i][2];
 
+		VertexInfo v1 = {
+			transformed_vertices[i1][0] + FIXED32(160),
+			transformed_vertices[i1][1] + FIXED32(120),
+			transformed_vertices[i1][2],
+			vertex_colors[i1][0], vertex_colors[i1][1], vertex_colors[i1][2]};
+			
+		VertexInfo v2 = {
+			transformed_vertices[i2][0] + FIXED32(160),
+			transformed_vertices[i2][1] + FIXED32(120),
+			transformed_vertices[i2][2],
+			vertex_colors[i2][0], vertex_colors[i2][1], vertex_colors[i2][2]};
+
+		VertexInfo v3 = {
+			transformed_vertices[i3][0] + FIXED32(160),
+			transformed_vertices[i3][1] + FIXED32(120),
+			transformed_vertices[i3][2],
+			vertex_colors[i3][0], vertex_colors[i3][1], vertex_colors[i3][2]};
+
 		// if (i % 2 == 0) {
 		// 	load_sync();
 		// // 	load_color(colors[i / 2]);
 		// }
 
-		load_triangle_verts(transformed_vertices[i1][0] + FIXED32(160), transformed_vertices[i1][1] + FIXED32(120), transformed_vertices[i1][2],
-							transformed_vertices[i2][0] + FIXED32(160), transformed_vertices[i2][1] + FIXED32(120), transformed_vertices[i2][2],
-							transformed_vertices[i3][0] + FIXED32(160), transformed_vertices[i3][1] + FIXED32(120), transformed_vertices[i3][2]);
+		load_triangle_verts(v1, v2, v3);
 	}
 
 	load_time = timer_ticks() - load_start;
