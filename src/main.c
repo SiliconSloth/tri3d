@@ -5,14 +5,8 @@
 #include <math.h>
 #include <libdragon.h>
 
-#define TV_TYPE_LOC (*((volatile uint32_t *)0x80000300))
-
 #define DPC_STATUS_REG (*((volatile uint32_t *)0xA410000C))
 #define SP_DMEM ((volatile uint32_t *) 0xA4000000)
-
-#define TV_TYPE_PAL 0
-#define TV_TYPE_NTSC 1
-#define TV_TYPE_MPAL 2
 
 #define SET_XBS 2
 #define RDP_DMA 0x100
@@ -118,10 +112,6 @@ void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 	va_end(pArgs);
 
 	graphics_draw_text(disp, x, y, szBuffer);
-}
-
-void set_tv_type(uint32_t tv_type) {
-	TV_TYPE_LOC = tv_type;
 }
 
 void set_xbus() {
@@ -500,7 +490,6 @@ int main(void){
 
 	init_interrupts();
 
-	set_tv_type(TV_TYPE_PAL);
 	display_init(RESOLUTION_320x240, DEPTH_16_BPP, 2, GAMMA_NONE, ANTIALIAS_RESAMPLE);
 	controller_init();
 	rsp_init();
