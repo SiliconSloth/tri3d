@@ -73,7 +73,8 @@ typedef struct {
 
 static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
 
-#define SETUP_BUFFER_SIZE 200
+#define SETUP_BUFFER_OFFSET 168
+#define SETUP_BUFFER_SIZE 296
 #define COMMAND_BUFFER_SIZE 1800
 
 static uint32_t buffer_starts[] = {SETUP_BUFFER_SIZE, SETUP_BUFFER_SIZE + COMMAND_BUFFER_SIZE};
@@ -455,12 +456,14 @@ void run_blocking() {
 void run_frame_setup(void *color_image, void *z_image) {
 	set_xbus();
 
-	SP_DMEM[17] = (uint32_t) color_image;
-	SP_DMEM[7] = (uint32_t) z_image;
-	SP_DMEM[9] = (uint32_t) z_image;
+	volatile uint32_t *setup_commands = SP_DMEM + SETUP_BUFFER_OFFSET / sizeof(uint32_t);
 
-	SP_DMEM[0] = 8;
-	SP_DMEM[1] = 104;
+	setup_commands[15] = (uint32_t) color_image;
+	setup_commands[5] = (uint32_t) z_image;
+	setup_commands[7] = (uint32_t) z_image;
+
+	SP_DMEM[0] = SETUP_BUFFER_OFFSET;
+	SP_DMEM[1] = (uint32_t) &tri3d_ucode_end - (uint32_t) &tri3d_ucode_data_start;
 
 	run_blocking();
 
