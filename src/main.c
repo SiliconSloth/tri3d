@@ -495,11 +495,11 @@ int main(void){
 	rsp_init();
 	timer_init();
 	
-    unsigned long ucode_code_size = &tri3d_ucode_data_start - &tri3d_ucode_start;
-    unsigned long ucode_data_size = &tri3d_ucode_end - &tri3d_ucode_data_start;
+    uint32_t ucode_code_size = (uint32_t) &tri3d_ucode_data_start - (uint32_t) &tri3d_ucode_start;
+    uint32_t ucode_data_size = (uint32_t) &tri3d_ucode_end - (uint32_t) &tri3d_ucode_data_start;
 
-    load_ucode((void*)&tri3d_ucode_start, ucode_code_size);
-    load_data((void*)&tri3d_ucode_data_start, ucode_data_size);
+    load_ucode((void *) &tri3d_ucode_start, ucode_code_size);
+    load_data((void *) &tri3d_ucode_data_start, ucode_data_size);
 	
 	fixed32 perspective[4][4] = {
 		{FIXED32(PERSP_SCALE), FIXED32(0), FIXED32(0), FIXED32(0)},
