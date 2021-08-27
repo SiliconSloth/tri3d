@@ -374,6 +374,11 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	compute_gradients(y1, v1.g, y2, v2.g, y3, v3.g, x2, x_mid, &dgde, &dgdx);
 	compute_gradients(y1, v1.b, y2, v2.b, y3, v3.b, x2, x_mid, &dbde, &dbdx);
 
+	fixed32 dsde, dtde;
+	fixed32 dsdx, dtdx;
+	compute_gradients(y1, v1.s, y2, v2.s, y3, v3.s, x2, x_mid, &dsde, &dsdx);
+	compute_gradients(y1, v1.t, y2, v2.t, y3, v3.t, x2, x_mid, &dtde, &dtdx);
+
 	fixed32 dzde;
 	fixed32 dzdx;
 	compute_gradients(y1, z1, y2, z2, y3, z3, x2, x_mid, &dzde, &dzdx);
@@ -410,16 +415,16 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	coeffs->dgdy = 0;
 	coeffs->dbdy = 0;
 
-	coeffs->s = 0;
-	coeffs->t = 0;
+	coeffs->s = v1.s;
+	coeffs->t = v1.t;
 	coeffs->w = 0;
 
-	coeffs->dsdx = FIXED32(16);
-	coeffs->dtdx = 0;
+	coeffs->dsdx = dsdx;
+	coeffs->dtdx = dtdx;
 	coeffs->dwdx = 0;
 
-	coeffs->dsde = 0;
-	coeffs->dtde = FIXED32(16);
+	coeffs->dsde = dsde;
+	coeffs->dtde = dtde;
 	coeffs->dwde = 0;
 
 	coeffs->dsdy = 0;
@@ -567,19 +572,19 @@ void load_cube(float x, float y, float z, fixed32 view_transform[4][4]) {
 		VertexInfo v1 = {
 			transformed_vertices[i1][0], transformed_vertices[i1][1], transformed_vertices[i1][2],
 			vertex_colors[i1][0], vertex_colors[i1][1], vertex_colors[i1][2],
-			tex_coords[i % 2][0], tex_coords[i % 2][1]
+			tex_coords[(i % 2) * 3][0], tex_coords[(i % 2) * 3][1]
 		};
 			
 		VertexInfo v2 = {
 			transformed_vertices[i2][0], transformed_vertices[i2][1], transformed_vertices[i2][2],
 			vertex_colors[i2][0], vertex_colors[i2][1], vertex_colors[i2][2],
-			tex_coords[i % 2 + 1][0], tex_coords[i % 2 + 1][1]
+			tex_coords[(i % 2) * 3 + 1][0], tex_coords[(i % 2) * 3 + 1][1]
 		};
 
 		VertexInfo v3 = {
 			transformed_vertices[i3][0], transformed_vertices[i3][1], transformed_vertices[i3][2],
 			vertex_colors[i3][0], vertex_colors[i3][1], vertex_colors[i3][2],
-			tex_coords[i % 2 + 2][0], tex_coords[i % 2 + 2][1]
+			tex_coords[(i % 2) * 3 + 2][0], tex_coords[(i % 2) * 3 + 2][1]
 		};
 
 		// if (i % 2 == 0) {
