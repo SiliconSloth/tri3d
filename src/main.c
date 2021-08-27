@@ -73,7 +73,7 @@ typedef struct {
 
 static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
 
-#define SETUP_BUFFER_OFFSET 168
+#define SETUP_BUFFER_OFFSET 8
 #define SETUP_BUFFER_SIZE 368
 #define COMMAND_BUFFER_SIZE 1776
 
