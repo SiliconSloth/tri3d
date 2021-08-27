@@ -74,8 +74,8 @@ typedef struct {
 static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
 
 #define SETUP_BUFFER_OFFSET 168
-#define SETUP_BUFFER_SIZE 296
-#define COMMAND_BUFFER_SIZE 1800
+#define SETUP_BUFFER_SIZE 368
+#define COMMAND_BUFFER_SIZE 1776
 
 static uint32_t buffer_starts[] = {SETUP_BUFFER_SIZE, SETUP_BUFFER_SIZE + COMMAND_BUFFER_SIZE};
 static int current_buffer = 0;
@@ -122,7 +122,7 @@ void set_xbus() {
 void load_triangle(TriangleCoeffs coeffs) {
 	volatile uint32_t *command = SP_DMEM + command_pointer / sizeof(uint32_t);
 
-	command[0] = 0xD000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
+	command[0] = 0xF000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
 	command[1] = ((coeffs.ym & 0xFFFFC000) << 2) | ((uint32_t) coeffs.yh >> 14);
 
 	command[2] = coeffs.xl;
@@ -162,13 +162,39 @@ void load_triangle(TriangleCoeffs coeffs) {
 
 	command += 16;
 
+	command[0] = 0;
+	command[1] = 0;
+
+	command[2] = 16 << 16;
+	command[3] = 0;
+
+	command[4] = 0;
+	command[5] = 0;
+
+	command[6] = 0;
+	command[7] = 0;
+
+	command[8] = 16;
+	command[9] = 0;
+
+	command[10] = 0;
+	command[11] = 0;
+
+	command[12] = 0;
+	command[13] = 0;
+
+	command[14] = 0;
+	command[15] = 0;
+
+	command += 16;
+
 	command[0] = coeffs.z;
 	command[1] = coeffs.dzdx;
 
 	command[2] = coeffs.dzde;
 	command[3] = coeffs.dzdy;
 
-	command_pointer += 112;
+	command_pointer += 176;
 }
 
 void load_color(uint32_t color) {
@@ -331,7 +357,7 @@ static const fixed32 vertex_colors[8][3] = {
 	{FIXED32(  0), FIXED32(256), FIXED32(256)}
 };
 
-static const int indices[12][3] = {
+static const int indices[11][3] = {
 	{0, 2, 1},
 	{0, 3, 2},
 	{4, 6, 5},
@@ -342,8 +368,8 @@ static const int indices[12][3] = {
 	{1, 2, 6},
 	{4, 1, 5},
 	{4, 0, 1},
-	{6, 3, 2},
-	{6, 7, 3}
+	{6, 3, 2}
+	// {6, 7, 3}
 };
 
 static fixed32 transformed_vertices[4][3];
@@ -448,6 +474,29 @@ void load_cube(float x, float y, float z, fixed32 view_transform[4][4]) {
 	load_time = timer_ticks() - load_start;
 }
 
+static uint8_t texture[] = {
+	0x01, 0x01, 0x55, 0x55, 0x55, 0x55, 0x20, 0x20,
+	0x11, 0x11, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02,
+	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20,
+	0x11, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
+	0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
+	0x33, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
+	0x33, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
+	0x33, 0x33, 0x00, 0x00, 0x00, 0x00, 0x04, 0x44,
+	0x33, 0x33, 0x30, 0x00, 0x00, 0x00, 0x04, 0x00,
+	0x33, 0x33, 0x33, 0x00, 0x44, 0x44, 0x44, 0x00,
+};
+
+static uint16_t palette[] = {
+	0xFFFF, 0x00FF, 0xF0F1, 0xF301, 0x0F01, 0xF001, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000
+};
+
 void run_blocking() {
 	while ((DPC_STATUS_REG & RDP_DMA) != 0);
 	run_ucode();
@@ -461,6 +510,9 @@ void run_frame_setup(void *color_image, void *z_image) {
 	setup_commands[15] = (uint32_t) color_image;
 	setup_commands[5] = (uint32_t) z_image;
 	setup_commands[7] = (uint32_t) z_image;
+	
+	setup_commands[25] = (uint32_t) &palette;
+	setup_commands[33] = (uint32_t) &texture;
 
 	SP_DMEM[0] = SETUP_BUFFER_OFFSET;
 	SP_DMEM[1] = (uint32_t) &tri3d_ucode_end - (uint32_t) &tri3d_ucode_data_start;
@@ -571,15 +623,17 @@ int main(void){
 		// }
 
 		graphics_printf(disp, 20, 20, "%u", COUNTS_PER_SECOND / total_cpu_time);
-		graphics_printf(disp, 20, 40, "%8lu", cpu_time);
-		graphics_printf(disp, 20, 50, "%8lu", rdp_time);
-		graphics_printf(disp, 20, 70, "%8lu", total_cpu_time);
-		graphics_printf(disp, 20, 80, "%8lu", total_rdp_time);
-		graphics_printf(disp, 20, 100, "%8lu", transform_time);
-		graphics_printf(disp, 20, 110, "%8lu", load_time);
-		graphics_printf(disp, 20, 130, "%8lu", prep_time);
-		graphics_printf(disp, 20, 140, "%8lu", matrix_time);
-		graphics_printf(disp, 20, 150, "%8lu", vertex_time);
+		// graphics_printf(disp, 20, 40, "%8lu", cpu_time);
+		// graphics_printf(disp, 20, 50, "%8lu", rdp_time);
+		// graphics_printf(disp, 20, 70, "%8lu", total_cpu_time);
+		// graphics_printf(disp, 20, 80, "%8lu", total_rdp_time);
+		// graphics_printf(disp, 20, 100, "%8lu", transform_time);
+		// graphics_printf(disp, 20, 110, "%8lu", load_time);
+		// graphics_printf(disp, 20, 130, "%8lu", prep_time);
+		// graphics_printf(disp, 20, 140, "%8lu", matrix_time);
+		// graphics_printf(disp, 20, 150, "%8lu", vertex_time);
+		
+		graphics_printf(disp, 20, 40, "%8lu", ucode_data_size);
 		display_show(disp);
 	}
 }
