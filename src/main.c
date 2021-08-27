@@ -55,6 +55,22 @@ typedef struct {
 	fixed32 dgdy;
 	fixed32 dbdy;
 
+	fixed32 s;
+	fixed32 t;
+	fixed32 w;
+
+	fixed32 dsdx;
+	fixed32 dtdx;
+	fixed32 dwdx;
+
+	fixed32 dsde;
+	fixed32 dtde;
+	fixed32 dwde;
+
+	fixed32 dsdy;
+	fixed32 dtdy;
+	fixed32 dwdy;
+
 	fixed32 z;
 	fixed32 dzdx;
 	fixed32 dzde;
@@ -69,6 +85,9 @@ typedef struct {
 	fixed32 r;
 	fixed32 g;
 	fixed32 b;
+
+	fixed32 s;
+	fixed32 t;
 } VertexInfo;
 
 static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
@@ -242,29 +261,29 @@ void load_triangle(TriangleCoeffs coeffs) {
 
 	command += 16;
 
-	command[0] = 0;
-	command[1] = 0;
+	command[0] = (coeffs.s & 0xFFFF0000) | ((uint32_t) coeffs.t >> 16);
+	command[1] = coeffs.w & 0xFFFF0000;
 
-	command[2] = 16 << 16;
-	command[3] = 0;
+	command[2] = (coeffs.dsdx & 0xFFFF0000) | ((uint32_t) coeffs.dtdx >> 16);
+	command[3] = coeffs.dwdx & 0xFFFF0000;
 
-	command[4] = 0;
-	command[5] = 0;
+	command[4] = ((uint32_t) coeffs.s << 16) | ((uint32_t) coeffs.t & 0xFFFF);
+	command[5] = (uint32_t) coeffs.w << 16;
 
-	command[6] = 0;
-	command[7] = 0;
+	command[6] = ((uint32_t) coeffs.dsdx << 16) | ((uint32_t) coeffs.dtdx & 0xFFFF);
+	command[7] = (uint32_t) coeffs.dwdx << 16;
 
-	command[8] = 16;
-	command[9] = 0;
+	command[8] = (coeffs.dsde & 0xFFFF0000) | ((uint32_t) coeffs.dtde >> 16);
+	command[9] = coeffs.dwde & 0xFFFF0000;
 
-	command[10] = 0;
-	command[11] = 0;
+	command[10] = (coeffs.dsdy & 0xFFFF0000) | ((uint32_t) coeffs.dtdy >> 16);
+	command[11] = coeffs.dwdy & 0xFFFF0000;
 
-	command[12] = 0;
-	command[13] = 0;
+	command[12] = ((uint32_t) coeffs.dsde << 16) | (coeffs.dtde & 0xFFFF);
+	command[13] = (uint32_t) coeffs.dwde << 16;
 
-	command[14] = 0;
-	command[15] = 0;
+	command[14] = ((uint32_t) coeffs.dsdy << 16) | (coeffs.dtdy & 0xFFFF);
+	command[15] = (uint32_t) coeffs.dwdy << 16;
 
 	command += 16;
 
@@ -391,6 +410,22 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	coeffs->dgdy = 0;
 	coeffs->dbdy = 0;
 
+	coeffs->s = 0;
+	coeffs->t = 0;
+	coeffs->w = 0;
+
+	coeffs->dsdx = FIXED32(16);
+	coeffs->dtdx = 0;
+	coeffs->dwdx = 0;
+
+	coeffs->dsde = 0;
+	coeffs->dtde = FIXED32(16);
+	coeffs->dwde = 0;
+
+	coeffs->dsdy = 0;
+	coeffs->dtdy = 0;
+	coeffs->dwdy = 0;
+
 	coeffs->z = z1;
 	coeffs->dzdx = dzdx;
 	coeffs->dzde = dzde;
@@ -430,6 +465,15 @@ static const fixed32 vertex_colors[8][3] = {
 	{FIXED32(256), FIXED32(  0), FIXED32(256)},
 	{FIXED32(256), FIXED32(256), FIXED32(256)},
 	{FIXED32(  0), FIXED32(256), FIXED32(256)}
+};
+
+static const fixed32 tex_coords[6][2] = {
+	{FIXED32(  0), FIXED32(  0)},
+	{FIXED32(512), FIXED32(512)},
+	{FIXED32(512), FIXED32(  0)},
+	{FIXED32(  0), FIXED32(  0)},
+	{FIXED32(  0), FIXED32(512)},
+	{FIXED32(512), FIXED32(512)}
 };
 
 static const int indices[12][3] = {
@@ -521,22 +565,22 @@ void load_cube(float x, float y, float z, fixed32 view_transform[4][4]) {
 		int i3 = indices[i][2];
 
 		VertexInfo v1 = {
-			transformed_vertices[i1][0],
-			transformed_vertices[i1][1],
-			transformed_vertices[i1][2],
-			vertex_colors[i1][0], vertex_colors[i1][1], vertex_colors[i1][2]};
+			transformed_vertices[i1][0], transformed_vertices[i1][1], transformed_vertices[i1][2],
+			vertex_colors[i1][0], vertex_colors[i1][1], vertex_colors[i1][2],
+			tex_coords[i % 2][0], tex_coords[i % 2][1]
+		};
 			
 		VertexInfo v2 = {
-			transformed_vertices[i2][0],
-			transformed_vertices[i2][1],
-			transformed_vertices[i2][2],
-			vertex_colors[i2][0], vertex_colors[i2][1], vertex_colors[i2][2]};
+			transformed_vertices[i2][0], transformed_vertices[i2][1], transformed_vertices[i2][2],
+			vertex_colors[i2][0], vertex_colors[i2][1], vertex_colors[i2][2],
+			tex_coords[i % 2 + 1][0], tex_coords[i % 2 + 1][1]
+		};
 
 		VertexInfo v3 = {
-			transformed_vertices[i3][0],
-			transformed_vertices[i3][1],
-			transformed_vertices[i3][2],
-			vertex_colors[i3][0], vertex_colors[i3][1], vertex_colors[i3][2]};
+			transformed_vertices[i3][0], transformed_vertices[i3][1], transformed_vertices[i3][2],
+			vertex_colors[i3][0], vertex_colors[i3][1], vertex_colors[i3][2],
+			tex_coords[i % 2 + 2][0], tex_coords[i % 2 + 2][1]
+		};
 
 		// if (i % 2 == 0) {
 		// 	load_sync();
