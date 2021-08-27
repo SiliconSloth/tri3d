@@ -81,6 +81,29 @@ static uint32_t buffer_starts[] = {SETUP_BUFFER_SIZE, SETUP_BUFFER_SIZE + COMMAN
 static int current_buffer = 0;
 static uint32_t command_pointer;
 
+static uint8_t texture[] = {
+	0x01, 0x01, 0x55, 0x55, 0x55, 0x55, 0x20, 0x20,
+	0x11, 0x11, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02,
+	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20,
+	0x11, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
+	0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
+	0x33, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
+	0x33, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
+	0x33, 0x33, 0x00, 0x00, 0x00, 0x00, 0x04, 0x44,
+	0x33, 0x33, 0x30, 0x00, 0x00, 0x00, 0x04, 0x00,
+	0x33, 0x33, 0x33, 0x00, 0x44, 0x44, 0x44, 0x00,
+};
+
+static uint16_t palette[] = {
+	0xFFFF, 0x00FF, 0xF0F1, 0xF301, 0x0F01, 0xF001, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000
+};
+
 #define COUNTS_PER_SECOND (93750000/2)
 
 static uint64_t start_time = 0;
@@ -119,7 +142,64 @@ void set_xbus() {
 	DPC_STATUS_REG = SET_XBS;
 }
 
+void run_blocking() {
+	while ((DPC_STATUS_REG & RDP_DMA) != 0);
+	run_ucode();
+}
+
+void poll_rdp() {
+	if (rdp_busy && (DPC_STATUS_REG & RDP_DMA) == 0) {
+		rdp_time = timer_ticks() - start_time;
+		rdp_busy = false;
+	}
+}
+
+void run_frame_setup(void *color_image, void *z_image) {
+	set_xbus();
+
+	volatile uint32_t *setup_commands = SP_DMEM + SETUP_BUFFER_OFFSET / sizeof(uint32_t);
+
+	setup_commands[15] = (uint32_t) color_image;
+	setup_commands[5] = (uint32_t) z_image;
+	setup_commands[7] = (uint32_t) z_image;
+	
+	setup_commands[25] = (uint32_t) &palette;
+	setup_commands[33] = (uint32_t) &texture;
+
+	SP_DMEM[0] = SETUP_BUFFER_OFFSET;
+	SP_DMEM[1] = (uint32_t) &tri3d_ucode_end - (uint32_t) &tri3d_ucode_data_start;
+
+	run_blocking();
+
+	current_buffer = 0;
+	command_pointer = buffer_starts[current_buffer];
+}
+
+void swap_command_buffers() {
+	SP_DMEM[0] = buffer_starts[current_buffer];
+	SP_DMEM[1] = command_pointer;
+
+	cpu_time = timer_ticks() - start_time;
+	run_blocking();
+	poll_rdp();
+	total_cpu_time += cpu_time;
+	total_rdp_time += rdp_time;
+	num_samples++;
+	start_time = timer_ticks();
+	rdp_busy = true;
+
+	current_buffer = 1 - current_buffer;
+	command_pointer = buffer_starts[current_buffer];
+}
+
+void swap_if_full(uint32_t command_size) {
+	if (command_pointer - buffer_starts[current_buffer] > COMMAND_BUFFER_SIZE - command_size) {
+		swap_command_buffers();
+	}
+}
+
 void load_triangle(TriangleCoeffs coeffs) {
+	swap_if_full(176);
 	volatile uint32_t *command = SP_DMEM + command_pointer / sizeof(uint32_t);
 
 	command[0] = 0xF000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
@@ -198,6 +278,7 @@ void load_triangle(TriangleCoeffs coeffs) {
 }
 
 void load_color(uint32_t color) {
+	swap_if_full(8);
 	volatile uint32_t *command = SP_DMEM + command_pointer / sizeof(uint32_t);
 
 	command[0] = 0x39000000;
@@ -207,6 +288,7 @@ void load_color(uint32_t color) {
 }
 
 void load_sync() {
+	swap_if_full(8);
 	volatile uint32_t *command = SP_DMEM + command_pointer / sizeof(uint32_t);
 
 	command[0] = 0x27000000;
@@ -321,13 +403,6 @@ void load_triangle_verts(VertexInfo v1, VertexInfo v2, VertexInfo v3) {
 	load_triangle(coeffs);
 }
 
-void poll_rdp() {
-	if (rdp_busy && (DPC_STATUS_REG & RDP_DMA) == 0) {
-		rdp_time = timer_ticks() - start_time;
-		rdp_busy = false;
-	}
-}
-
 #define RADIUS 100
 
 #define PERSP_SCALE (1.0 / tanf(40.0 * M_PI / 360))
@@ -357,7 +432,7 @@ static const fixed32 vertex_colors[8][3] = {
 	{FIXED32(  0), FIXED32(256), FIXED32(256)}
 };
 
-static const int indices[11][3] = {
+static const int indices[12][3] = {
 	{0, 2, 1},
 	{0, 3, 2},
 	{4, 6, 5},
@@ -368,8 +443,8 @@ static const int indices[11][3] = {
 	{1, 2, 6},
 	{4, 1, 5},
 	{4, 0, 1},
-	{6, 3, 2}
-	// {6, 7, 3}
+	{6, 3, 2},
+	{6, 7, 3}
 };
 
 static fixed32 transformed_vertices[4][3];
@@ -474,72 +549,6 @@ void load_cube(float x, float y, float z, fixed32 view_transform[4][4]) {
 	load_time = timer_ticks() - load_start;
 }
 
-static uint8_t texture[] = {
-	0x01, 0x01, 0x55, 0x55, 0x55, 0x55, 0x20, 0x20,
-	0x11, 0x11, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02,
-	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20,
-	0x11, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
-	0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
-	0x33, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
-	0x33, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
-	0x33, 0x33, 0x00, 0x00, 0x00, 0x00, 0x04, 0x44,
-	0x33, 0x33, 0x30, 0x00, 0x00, 0x00, 0x04, 0x00,
-	0x33, 0x33, 0x33, 0x00, 0x44, 0x44, 0x44, 0x00,
-};
-
-static uint16_t palette[] = {
-	0xFFFF, 0x00FF, 0xF0F1, 0xF301, 0x0F01, 0xF001, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000
-};
-
-void run_blocking() {
-	while ((DPC_STATUS_REG & RDP_DMA) != 0);
-	run_ucode();
-}
-
-void run_frame_setup(void *color_image, void *z_image) {
-	set_xbus();
-
-	volatile uint32_t *setup_commands = SP_DMEM + SETUP_BUFFER_OFFSET / sizeof(uint32_t);
-
-	setup_commands[15] = (uint32_t) color_image;
-	setup_commands[5] = (uint32_t) z_image;
-	setup_commands[7] = (uint32_t) z_image;
-	
-	setup_commands[25] = (uint32_t) &palette;
-	setup_commands[33] = (uint32_t) &texture;
-
-	SP_DMEM[0] = SETUP_BUFFER_OFFSET;
-	SP_DMEM[1] = (uint32_t) &tri3d_ucode_end - (uint32_t) &tri3d_ucode_data_start;
-
-	run_blocking();
-
-	current_buffer = 0;
-	command_pointer = buffer_starts[current_buffer];
-}
-
-void swap_command_buffers() {
-	SP_DMEM[0] = buffer_starts[current_buffer];
-	SP_DMEM[1] = command_pointer;
-
-	cpu_time = timer_ticks() - start_time;
-	run_blocking();
-	poll_rdp();
-	total_cpu_time += cpu_time;
-	total_rdp_time += rdp_time;
-	num_samples++;
-	start_time = timer_ticks();
-	rdp_busy = true;
-
-	current_buffer = 1 - current_buffer;
-	command_pointer = buffer_starts[current_buffer];
-}
-
 int main(void){
 	static display_context_t disp = 0;
 
@@ -613,9 +622,12 @@ int main(void){
 			for (int y = 0; y < 4; y++) {
 				for (int x = 0; x < 4; x++) {
 					load_cube(x * 80 - 120, y * 80 - 120, z * 80 - 120, transformation2);
-					swap_command_buffers();
 				}
 			}
+		}
+
+		if (command_pointer != buffer_starts[current_buffer]) {
+			swap_command_buffers();
 		}
 		
 		// for (size_t i = 0; i < 320 * 240; i++) {
