@@ -475,12 +475,12 @@ static const fixed32 vertex_colors[8][3] = {
 };
 
 static const fixed32 tex_coords[6][2] = {
-	{FIXED32(  0), FIXED32(  0)},
-	{FIXED32(512), FIXED32(512)},
-	{FIXED32(512), FIXED32(  0)},
-	{FIXED32(  0), FIXED32(  0)},
-	{FIXED32(  0), FIXED32(512)},
-	{FIXED32(512), FIXED32(512)}
+	{FIXED32(-16), FIXED32(-16)},
+	{FIXED32(496), FIXED32(496)},
+	{FIXED32(496), FIXED32(-16)},
+	{FIXED32(-16), FIXED32(-16)},
+	{FIXED32(-16), FIXED32(496)},
+	{FIXED32(496), FIXED32(496)}
 };
 
 static const int indices[12][3] = {
