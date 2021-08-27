@@ -401,9 +401,9 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	coeffs->xm = xm;
 	coeffs->dxmdy = dxmdy;
 
-	coeffs->red   = v1.r;
-	coeffs->green = v1.g;
-	coeffs->blue  = v1.b;
+	coeffs->red   = v1.r - MUL_FX32(y1_frac, drde);
+	coeffs->green = v1.g - MUL_FX32(y1_frac, dgde);
+	coeffs->blue  = v1.b - MUL_FX32(y1_frac, dbde);
 
 	coeffs->drdx = drdx;
 	coeffs->dgdx = dgdx;
@@ -417,8 +417,8 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	coeffs->dgdy = 0;
 	coeffs->dbdy = 0;
 
-	coeffs->s = v1.s;
-	coeffs->t = v1.t;
+	coeffs->s = v1.s - MUL_FX32(y1_frac, dsde);
+	coeffs->t = v1.t - MUL_FX32(y1_frac, dtde);
 	coeffs->w = 0;
 
 	coeffs->dsdx = dsdx;
@@ -433,7 +433,7 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	coeffs->dtdy = 0;
 	coeffs->dwdy = 0;
 
-	coeffs->z = z1;
+	coeffs->z = z1 - MUL_FX32(y1_frac, dzde);
 	coeffs->dzdx = dzdx;
 	coeffs->dzde = dzde;
 	coeffs->dzdy = 0;
