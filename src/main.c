@@ -126,6 +126,13 @@ static uint16_t palette[] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+#define LEFT  (-1.0)
+#define RIGHT (1.0)
+#define TOP (-1.0)
+#define BOTTOM (1.0)
+#define NEAR (1.0)
+#define FAR (80.0)
+
 #define COUNTS_PER_SECOND (93750000/2)
 
 static uint64_t start_time = 0;
@@ -352,9 +359,9 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 		}
 	}
 
-	fixed32 x1 = v1.x, y1 = v1.y;
-	fixed32 x2 = v2.x, y2 = v2.y;
-	fixed32 x3 = v3.x, y3 = v3.y;
+	fixed32 x1 = v1.x, y1 = v1.y, z1 = v1.z;
+	fixed32 x2 = v2.x, y2 = v2.y, z2 = v2.z;
+	fixed32 x3 = v3.x, y3 = v3.y, z3 = v3.z;
 
 	fixed32 dxldy = (y3 - y2 < FIXED32(1)) ? 0 : DIV_FX32(x3 - x2, y3 - y2);
 	fixed32 dxmdy = (y2 - y1 < FIXED32(1)) ? 0 : DIV_FX32(x2 - x1, y2 - y1);
@@ -382,22 +389,14 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	compute_gradients(y1, v1.s, y2, v2.s, y3, v3.s, x2, x_mid, &dsde, &dsdx);
 	compute_gradients(y1, v1.t, y2, v2.t, y3, v3.t, x2, x_mid, &dtde, &dtdx);
 
-	fixed32 iw1 = DIV_FX32(FIXED32(1), v1.w);
-	fixed32 iw2 = DIV_FX32(FIXED32(1), v2.w);
-	fixed32 iw3 = DIV_FX32(FIXED32(1), v3.w);
+	#define DEPTH_MUL 0x7C00
 
-	fixed32 dwde, dwdx;
-	compute_gradients(y1, iw1, y2, iw2, y3, iw3, x2, x_mid, &dwde, &dwdx);
+	fixed32 dzde, dzdx;
+	compute_gradients(y1, z1, y2, z2, y3, z3, x2, x_mid, &dzde, &dzdx);
 
-	#define TRANS_Z(z) (z * 0x8000)
-
-	fixed32 iz1 = TRANS_Z(v1.z);
-	fixed32 iz2 = TRANS_Z(v2.z);
-	fixed32 iz3 = TRANS_Z(v3.z);
-
-	fixed32 dzde;
-	fixed32 dzdx;
-	compute_gradients(y1, iz1, y2, iz2, y3, iz3, x2, x_mid, &dzde, &dzdx);
+	fixed32 z = z1 - MUL_FX32(y1_frac, dzde);
+	dzde *= DEPTH_MUL;
+	dzdx *= DEPTH_MUL;
 
 	coeffs->major = major;
 
@@ -431,29 +430,25 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	coeffs->dgdy = 0;
 	coeffs->dbdy = 0;
 
-	#define W_MUL 0x7FFF
-
 	coeffs->s = v1.s - MUL_FX32(y1_frac, dsde);
 	coeffs->t = v1.t - MUL_FX32(y1_frac, dtde);
-	coeffs->w = (iw1 - MUL_FX32(y1_frac, dwde)) * W_MUL;
+	coeffs->w = z * DEPTH_MUL;
 
 	coeffs->dsdx = dsdx;
 	coeffs->dtdx = dtdx;
-	coeffs->dwdx = dwdx * W_MUL;
+	coeffs->dwdx = dzdx;
 
 	coeffs->dsde = dsde;
 	coeffs->dtde = dtde;
-	coeffs->dwde = dwde * W_MUL;
+	coeffs->dwde = dzde;
 
 	coeffs->dsdy = 0;
 	coeffs->dtdy = 0;
 	coeffs->dwdy = 0;
 
-	#define Z_MUL 1
-
-	coeffs->z = (iz1 - MUL_FX32(y1_frac, dzde)) * Z_MUL;
-	coeffs->dzdx = dzdx * Z_MUL;
-	coeffs->dzde = dzde * Z_MUL;
+	coeffs->z = (FIXED32(1) - z) * DEPTH_MUL;
+	coeffs->dzdx = -dzdx;
+	coeffs->dzde = -dzde;
 	coeffs->dzdy = 0;
 }
 
@@ -584,19 +579,19 @@ void load_cube(float x, float y, float z, fixed32 view_transform[4][4]) {
 		VertexInfo v1 = {
 			transformed_vertices[i1][0], transformed_vertices[i1][1], transformed_vertices[i1][2], transformed_vertices[i1][3],
 			vertex_colors[i1][0], vertex_colors[i1][1], vertex_colors[i1][2],
-			DIV_FX32(tex_coords[(i % 2) * 3][0], transformed_vertices[i1][3]), DIV_FX32(tex_coords[(i % 2) * 3][1], transformed_vertices[i1][3])
+			MUL_FX32(tex_coords[(i % 2) * 3][0], transformed_vertices[i1][2]), MUL_FX32(tex_coords[(i % 2) * 3][1], transformed_vertices[i1][2])
 		};
 			
 		VertexInfo v2 = {
 			transformed_vertices[i2][0], transformed_vertices[i2][1], transformed_vertices[i2][2], transformed_vertices[i2][3],
 			vertex_colors[i2][0], vertex_colors[i2][1], vertex_colors[i2][2],
-			DIV_FX32(tex_coords[(i % 2) * 3 + 1][0], transformed_vertices[i2][3]), DIV_FX32(tex_coords[(i % 2) * 3 + 1][1], transformed_vertices[i2][3])
+			MUL_FX32(tex_coords[(i % 2) * 3 + 1][0], transformed_vertices[i2][2]), MUL_FX32(tex_coords[(i % 2) * 3 + 1][1], transformed_vertices[i2][2])
 		};
 
 		VertexInfo v3 = {
 			transformed_vertices[i3][0], transformed_vertices[i3][1], transformed_vertices[i3][2], transformed_vertices[i3][3],
 			vertex_colors[i3][0], vertex_colors[i3][1], vertex_colors[i3][2],
-			DIV_FX32(tex_coords[(i % 2) * 3 + 2][0], transformed_vertices[i3][3]), DIV_FX32(tex_coords[(i % 2) * 3 + 2][1], transformed_vertices[i3][3])
+			MUL_FX32(tex_coords[(i % 2) * 3 + 2][0], transformed_vertices[i3][2]), MUL_FX32(tex_coords[(i % 2) * 3 + 2][1], transformed_vertices[i3][2])
 		};
 
 		// if (i % 2 == 0) {
@@ -632,19 +627,12 @@ int main(void){
 		{FIXED32(0), FIXED32(0), FIXED32(1), FIXED32(0)},
 		{FIXED32(0), FIXED32(0), FIXED32(30), FIXED32(1)}
 	};
-
-	#define LEFT  (-1.0)
-	#define RIGHT (1.0)
-	#define TOP (-1.0)
-	#define BOTTOM (1.0)
-	#define NEAR (1.0)
-	#define FAR (80.0)
 	
 	fixed32 perspective[4][4] = {
-		{FIXED32(2.0 * NEAR / (RIGHT - LEFT)),      FIXED32(0), 							   FIXED32(0), 							FIXED32(0)},
-		{FIXED32(0), 						   	    FIXED32(2.0 * NEAR / (BOTTOM - TOP)),      FIXED32(0), 	                        FIXED32(0)},
-		{FIXED32(-(RIGHT + LEFT) / (RIGHT - LEFT)), FIXED32(-(BOTTOM + TOP) / (BOTTOM - TOP)), FIXED32(FAR / (FAR - NEAR)),         FIXED32(1)},
-		{FIXED32(0),                                FIXED32(0),                                FIXED32(-FAR * NEAR / (FAR - NEAR)), FIXED32(0)}
+		{FIXED32(2.0 * NEAR / (RIGHT - LEFT)),      FIXED32(0), 							   FIXED32(0), FIXED32(0)},
+		{FIXED32(0), 						   	    FIXED32(2.0 * NEAR / (BOTTOM - TOP)),      FIXED32(0), FIXED32(0)},
+		{FIXED32(-(RIGHT + LEFT) / (RIGHT - LEFT)), FIXED32(-(BOTTOM + TOP) / (BOTTOM - TOP)), FIXED32(-NEAR / (FAR - NEAR)), FIXED32(1)},
+		{FIXED32(0),                                FIXED32(0),                                FIXED32(FAR * NEAR / (FAR - NEAR)), FIXED32(0)}
 	};
 	
 	fixed32 screen_transform[4][4] = {
