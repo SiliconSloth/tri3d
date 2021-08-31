@@ -30,7 +30,7 @@ ROM_EXTENSION = .z64
 N64_FLAGS = -l 2M -h $(HEADERPATH)/$(HEADERNAME) -o $(BUILDDIR)/$(PROG_NAME)$(ROM_EXTENSION) $(BUILDDIR)/$(PROG_NAME).bin
 endif
 
-OBJS = $(BUILDDIR)/main.o $(BUILDDIR)/dispatch.o $(BUILDDIR)/triangle.o $(BUILDDIR)/ucode.o
+OBJS = $(BUILDDIR)/dispatch.o $(BUILDDIR)/main.o  $(BUILDDIR)/matrix.o $(BUILDDIR)/triangle.o $(BUILDDIR)/ucode.o
 
 $(BUILDDIR)/$(PROG_NAME)$(ROM_EXTENSION): $(BUILDDIR)/$(PROG_NAME).elf
 	$(OBJCOPY) $(BUILDDIR)/$(PROG_NAME).elf $(BUILDDIR)/$(PROG_NAME).bin -O binary

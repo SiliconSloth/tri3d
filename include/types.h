@@ -1,6 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef int32_t fixed32;
@@ -8,6 +9,10 @@ typedef int32_t fixed32;
 #define FIXED32(v) ((fixed32) ((v) * 65536))
 #define MUL_FX32(a, b) (((int64_t) (a)) * (b) / 65536)
 #define DIV_FX32(a, b) (((int64_t) (a)) * 65536 / (b))
+
+typedef struct {
+    fixed32 m[4][4];
+} Matrix4;
 
 typedef struct {
     bool major;

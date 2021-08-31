@@ -5,11 +5,12 @@
 #include <math.h>
 #include <libdragon.h>
 
-#include "types.h"
+#include "data.h"
 #include "dispatch.h"
+#include "matrix.h"
 #include "profile.h"
 #include "triangle.h"
-#include "data.h"
+#include "types.h"
 
 extern uint16_t *__safe_buffer[];
 
@@ -35,35 +36,18 @@ void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 
 static fixed32 transformed_vertices[8][3];
 
-void matrix_mul(fixed32 a[4][4], fixed32 b[4][4], fixed32 out[4][4]) {
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			poll_rdp();
-			fixed32 sum = FIXED32(0);
-			for (int k = 0; k < 4; k++) {
-				sum += MUL_FX32(a[k][i], b[j][k]);
-			}
-			out[j][i] = sum;
-		}
-	}
-}
-
-void load_cube(float x, float y, float z, fixed32 view_transform[4][4]) {
+void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 	transform_start = timer_ticks();
 	prep_start = timer_ticks();
 	
-	fixed32 translation[4][4] = {
-		{FIXED32(1), FIXED32(0), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(1), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(0), FIXED32(1), FIXED32(0)},
-		{FIXED32(x), FIXED32(y), FIXED32(z), FIXED32(1)}
-	};
+	Matrix4 translation;
+	matrix_translate(&translation, x, y, z);
 
 	prep_time = timer_ticks() - prep_start;
 	matrix_start = timer_ticks();
 
-	fixed32 transformation[4][4];
-	matrix_mul(view_transform, translation, transformation);
+	Matrix4 transformation;
+	matrix_mul(view_transform, &translation, &transformation);
 
 	matrix_time = timer_ticks() - matrix_start;
 	vertex_start = timer_ticks();
@@ -73,7 +57,7 @@ void load_cube(float x, float y, float z, fixed32 view_transform[4][4]) {
 			poll_rdp();
 			fixed32 sum = FIXED32(0);
 			for (int k = 0; k < 4; k++) {
-				sum += MUL_FX32(transformation[k][i], k == 3? FIXED32(1) : vertices[j][k]);
+				sum += MUL_FX32(transformation.m[k][i], k == 3? FIXED32(1) : vertices[j][k]);
 			}
 
 			if (i < 3) {
@@ -147,31 +131,21 @@ int main(void){
 
 	init_ucode();
 	
-	fixed32 camera_transform[4][4] = {
-		{FIXED32(1), FIXED32(0), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(1), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(0), FIXED32(1), FIXED32(0)},
-		{FIXED32(0), FIXED32(0), FIXED32(30), FIXED32(1)}
-	};
+	Matrix4 camera_transform;
+	matrix_translate(&camera_transform, 0, 0, 30);
 	
-	fixed32 perspective[4][4] = {
-		{FIXED32(2.0 * NEAR / (RIGHT - LEFT)),      FIXED32(0), 							   FIXED32(0), FIXED32(0)},
-		{FIXED32(0), 						   	    FIXED32(2.0 * NEAR / (BOTTOM - TOP)),      FIXED32(0), FIXED32(0)},
-		{FIXED32(-(RIGHT + LEFT) / (RIGHT - LEFT)), FIXED32(-(BOTTOM + TOP) / (BOTTOM - TOP)), FIXED32(-NEAR / (FAR - NEAR)), FIXED32(1)},
-		{FIXED32(0),                                FIXED32(0),                                FIXED32(FAR * NEAR / (FAR - NEAR)), FIXED32(0)}
-	};
+	Matrix4 perspective;
+	matrix_perspective(&perspective, LEFT, RIGHT, TOP, BOTTOM, NEAR, FAR);
 	
-	fixed32 screen_transform[4][4] = {
-		{FIXED32(160), FIXED32(0), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(160), FIXED32(0), FIXED32(0)},
-		{FIXED32(0), FIXED32(0), FIXED32(1), FIXED32(0)},
-		{FIXED32(160), FIXED32(120), FIXED32(0), FIXED32(1)}
-	};
+	Matrix4 screen_scale, screen_translate, screen_transform;
+	matrix_scale(&screen_scale, 160, 160, 1);
+	matrix_translate(&screen_translate, 160, 120, 0);
+	matrix_mul(&screen_translate, &screen_scale, &screen_transform);
 
-	fixed32 temp_transform[4][4];
-	fixed32 view_transform[4][4];
-	matrix_mul(perspective, camera_transform, temp_transform);
-	matrix_mul(screen_transform, temp_transform, view_transform);
+	Matrix4 temp_transform;
+	Matrix4 view_transform;
+	matrix_mul(&perspective, &camera_transform, &temp_transform);
+	matrix_mul(&screen_transform, &temp_transform, &view_transform);
 
 	float t = 1.102;
 	while (1) {
@@ -179,26 +153,18 @@ int main(void){
 
 		t += 0.01;
 
-		fixed32 rotation1[4][4] = {
-			{FIXED32(cosf(t)),  FIXED32(sinf(t)), FIXED32(0), FIXED32(0)},
-			{FIXED32(-sinf(t)), FIXED32(cosf(t)), FIXED32(0), FIXED32(0)},
-			{FIXED32(0), 	    FIXED32(0), 	  FIXED32(1), FIXED32(0)},
-			{FIXED32(0), 		FIXED32(0), 	  FIXED32(0), FIXED32(1)}
-		};
+		Matrix4 rotation1;
+		matrix_rotate_z(&rotation1, t);
 
 		float t2 = t * 1.1;
-		fixed32 rotation2[4][4] = {
-			{FIXED32(1), FIXED32(0), 		 FIXED32(0),        FIXED32(0)},
-			{FIXED32(0), FIXED32(cosf(t2)),  FIXED32(sinf(t2)), FIXED32(0)},
-			{FIXED32(0), FIXED32(-sinf(t2)), FIXED32(cosf(t2)), FIXED32(0)},
-			{FIXED32(0), FIXED32(0), 		 FIXED32(0),        FIXED32(1)}
-		};
+		Matrix4 rotation2;
+		matrix_rotate_x(&rotation2, t2);
 
-		fixed32 transformation1[4][4];
-		fixed32 transformation2[4][4];
+		Matrix4 transformation1;
+		Matrix4 transformation2;
 
-		matrix_mul(rotation2, rotation1, transformation1);
-		matrix_mul(view_transform, transformation1, transformation2);
+		matrix_mul(&rotation2, &rotation1, &transformation1);
+		matrix_mul(&view_transform, &transformation1, &transformation2);
 
 		run_frame_setup(__safe_buffer[disp-1], &z_buffer, &texture, &palette);
 		// run_frame_setup(&z_buffer, __safe_buffer[disp-1], &texture, &palette);
@@ -206,7 +172,7 @@ int main(void){
 		for (int z = 0; z < 4; z++) {
 			for (int y = 0; y < 4; y++) {
 				for (int x = 0; x < 4; x++) {
-					load_cube(x * 8 - 12, y * 8 - 12, z * 8 - 12, transformation2);
+					load_cube(x * 8 - 12, y * 8 - 12, z * 8 - 12, &transformation2);
 				}
 			}
 		}
