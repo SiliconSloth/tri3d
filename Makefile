@@ -8,7 +8,7 @@ HEADERPATH = $(ROOTDIR)/mips64-elf/lib
 N64TOOL = $(ROOTDIR)/bin/n64tool
 HEADERNAME = header
 LINK_FLAGS = -L$(ROOTDIR)/mips64-elf/lib -ldragon -lc -lm -ldragonsys -Tn64.ld
-CFLAGS = -std=gnu99 -march=vr4300 -mtune=vr4300 -Wall -Werror -c -I$(ROOTDIR)/mips64-elf/include
+CFLAGS = -std=gnu99 -march=vr4300 -mtune=vr4300 -Wall -Werror -c -I$(ROOTDIR)/mips64-elf/include -Iinclude
 ASFLAGS = -mtune=vr4300 -march=vr4300
 CC = $(GCCN64PREFIX)gcc
 AS = $(GCCN64PREFIX)as
@@ -30,7 +30,7 @@ ROM_EXTENSION = .z64
 N64_FLAGS = -l 2M -h $(HEADERPATH)/$(HEADERNAME) -o $(BUILDDIR)/$(PROG_NAME)$(ROM_EXTENSION) $(BUILDDIR)/$(PROG_NAME).bin
 endif
 
-OBJS = $(BUILDDIR)/main.o $(BUILDDIR)/ucode.o
+OBJS = $(BUILDDIR)/main.o $(BUILDDIR)/dispatch.o $(BUILDDIR)/ucode.o
 
 $(BUILDDIR)/$(PROG_NAME)$(ROM_EXTENSION): $(BUILDDIR)/$(PROG_NAME).elf
 	$(OBJCOPY) $(BUILDDIR)/$(PROG_NAME).elf $(BUILDDIR)/$(PROG_NAME).bin -O binary
