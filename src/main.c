@@ -105,6 +105,31 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 	load_time = timer_ticks() - load_start;
 }
 
+void make_view_matrix(Matrix4 *out) {
+	Matrix4 camera_transform, perspective, screen_scale, screen_translate;
+
+	matrix_translate(&camera_transform, 0, 0, 30);
+	matrix_perspective(&perspective, LEFT, RIGHT, TOP, BOTTOM, NEAR, FAR);
+	matrix_scale(&screen_scale, 160, 160, 1);
+	matrix_translate(&screen_translate, 160, 120, 0);
+	
+	Matrix4 temp1, temp2;
+	matrix_mul(&screen_translate, &screen_scale, &temp1);
+	matrix_mul(&temp1, &perspective, &temp2);
+	matrix_mul(&temp2, &camera_transform, out);
+}
+
+void make_frame_matrix(float t, Matrix4 *view_transform, Matrix4 *out) {
+	Matrix4 rotation1, rotation2;
+
+	matrix_rotate_z(&rotation1, t);
+	matrix_rotate_x(&rotation2, t * 1.1);
+
+	Matrix4 temp;
+	matrix_mul(view_transform, &rotation2, &temp);
+	matrix_mul(&temp, &rotation1, out);
+}
+
 int main(void){
 	static display_context_t disp = 0;
 
@@ -117,21 +142,8 @@ int main(void){
 
 	init_ucode();
 	
-	Matrix4 camera_transform;
-	matrix_translate(&camera_transform, 0, 0, 30);
-	
-	Matrix4 perspective;
-	matrix_perspective(&perspective, LEFT, RIGHT, TOP, BOTTOM, NEAR, FAR);
-	
-	Matrix4 screen_scale, screen_translate, screen_transform;
-	matrix_scale(&screen_scale, 160, 160, 1);
-	matrix_translate(&screen_translate, 160, 120, 0);
-	matrix_mul(&screen_translate, &screen_scale, &screen_transform);
-
-	Matrix4 temp_transform;
 	Matrix4 view_transform;
-	matrix_mul(&perspective, &camera_transform, &temp_transform);
-	matrix_mul(&screen_transform, &temp_transform, &view_transform);
+	make_view_matrix(&view_transform);
 
 	float t = 1.102;
 	while (1) {
@@ -139,18 +151,8 @@ int main(void){
 
 		t += 0.01;
 
-		Matrix4 rotation1;
-		matrix_rotate_z(&rotation1, t);
-
-		float t2 = t * 1.1;
-		Matrix4 rotation2;
-		matrix_rotate_x(&rotation2, t2);
-
-		Matrix4 transformation1;
-		Matrix4 transformation2;
-
-		matrix_mul(&rotation2, &rotation1, &transformation1);
-		matrix_mul(&view_transform, &transformation1, &transformation2);
+		Matrix4 transformation;
+		make_frame_matrix(t, &view_transform, &transformation);
 
 		run_frame_setup(__safe_buffer[disp-1], &z_buffer, &texture, &palette);
 		// run_frame_setup(&z_buffer, __safe_buffer[disp-1], &texture, &palette);
@@ -158,7 +160,7 @@ int main(void){
 		for (int z = 0; z < 4; z++) {
 			for (int y = 0; y < 4; y++) {
 				for (int x = 0; x < 4; x++) {
-					load_cube(x * 8 - 12, y * 8 - 12, z * 8 - 12, &transformation2);
+					load_cube(x * 8 - 12, y * 8 - 12, z * 8 - 12, &transformation);
 				}
 			}
 		}
