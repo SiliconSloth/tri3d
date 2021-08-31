@@ -81,7 +81,6 @@ typedef struct {
 	fixed32 x;
 	fixed32 y;
 	fixed32 z;
-	fixed32 w;
 
 	fixed32 r;
 	fixed32 g;
@@ -504,7 +503,7 @@ static const int indices[12][3] = {
 	{6, 7, 3}
 };
 
-static fixed32 transformed_vertices[8][4];
+static fixed32 transformed_vertices[8][3];
 
 void matrix_mul(fixed32 a[4][4], fixed32 b[4][4], fixed32 out[4][4]) {
 	for (int i = 0; i < 4; i++) {
@@ -547,8 +546,9 @@ void load_cube(float x, float y, float z, fixed32 view_transform[4][4]) {
 				sum += MUL_FX32(transformation[k][i], k == 3? FIXED32(1) : vertices[j][k]);
 			}
 
-			transformed_vertices[j][i] = sum;
-			if (i == 3) {
+			if (i < 3) {
+				transformed_vertices[j][i] = sum;
+			} else {
 				transformed_vertices[j][0] = DIV_FX32(transformed_vertices[j][0], sum);
 				transformed_vertices[j][1] = DIV_FX32(transformed_vertices[j][1], sum);
 				transformed_vertices[j][2] = DIV_FX32(transformed_vertices[j][2], sum);
@@ -577,19 +577,19 @@ void load_cube(float x, float y, float z, fixed32 view_transform[4][4]) {
 		int i3 = indices[i][2];
 
 		VertexInfo v1 = {
-			transformed_vertices[i1][0], transformed_vertices[i1][1], transformed_vertices[i1][2], transformed_vertices[i1][3],
+			transformed_vertices[i1][0], transformed_vertices[i1][1], transformed_vertices[i1][2],
 			vertex_colors[i1][0], vertex_colors[i1][1], vertex_colors[i1][2],
 			MUL_FX32(tex_coords[(i % 2) * 3][0], transformed_vertices[i1][2]), MUL_FX32(tex_coords[(i % 2) * 3][1], transformed_vertices[i1][2])
 		};
 			
 		VertexInfo v2 = {
-			transformed_vertices[i2][0], transformed_vertices[i2][1], transformed_vertices[i2][2], transformed_vertices[i2][3],
+			transformed_vertices[i2][0], transformed_vertices[i2][1], transformed_vertices[i2][2],
 			vertex_colors[i2][0], vertex_colors[i2][1], vertex_colors[i2][2],
 			MUL_FX32(tex_coords[(i % 2) * 3 + 1][0], transformed_vertices[i2][2]), MUL_FX32(tex_coords[(i % 2) * 3 + 1][1], transformed_vertices[i2][2])
 		};
 
 		VertexInfo v3 = {
-			transformed_vertices[i3][0], transformed_vertices[i3][1], transformed_vertices[i3][2], transformed_vertices[i3][3],
+			transformed_vertices[i3][0], transformed_vertices[i3][1], transformed_vertices[i3][2],
 			vertex_colors[i3][0], vertex_colors[i3][1], vertex_colors[i3][2],
 			MUL_FX32(tex_coords[(i % 2) * 3 + 2][0], transformed_vertices[i3][2]), MUL_FX32(tex_coords[(i % 2) * 3 + 2][1], transformed_vertices[i3][2])
 		};
