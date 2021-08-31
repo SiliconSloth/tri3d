@@ -389,7 +389,7 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	fixed32 dwde, dwdx;
 	compute_gradients(y1, iw1, y2, iw2, y3, iw3, x2, x_mid, &dwde, &dwdx);
 
-	#define TRANS_Z(z) (0x80000000 - DIV_FX32(0x37FFFFFF, z))
+	#define TRANS_Z(z) (z * 0x8000)
 
 	fixed32 iz1 = TRANS_Z(v1.z);
 	fixed32 iz2 = TRANS_Z(v2.z);
@@ -449,9 +449,11 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	coeffs->dtdy = 0;
 	coeffs->dwdy = 0;
 
-	coeffs->z = iz1 - MUL_FX32(y1_frac, dzde);
-	coeffs->dzdx = dzdx;
-	coeffs->dzde = dzde;
+	#define Z_MUL 1
+
+	coeffs->z = (iz1 - MUL_FX32(y1_frac, dzde)) * Z_MUL;
+	coeffs->dzdx = dzdx * Z_MUL;
+	coeffs->dzde = dzde * Z_MUL;
 	coeffs->dzdy = 0;
 }
 
@@ -636,13 +638,13 @@ int main(void){
 	#define TOP (-1.0)
 	#define BOTTOM (1.0)
 	#define NEAR (1.0)
-	#define FAR (100.0)
+	#define FAR (80.0)
 	
 	fixed32 perspective[4][4] = {
-		{FIXED32(2.0 * NEAR / (RIGHT - LEFT)),      FIXED32(0), 							   FIXED32(0), 								  FIXED32(0)},
-		{FIXED32(0), 						   	    FIXED32(2.0 * NEAR / (BOTTOM - TOP)),      FIXED32(0), 	                              FIXED32(0)},
-		{FIXED32(-(RIGHT + LEFT) / (RIGHT - LEFT)), FIXED32(-(BOTTOM + TOP) / (BOTTOM - TOP)), FIXED32((FAR + NEAR) / (FAR - NEAR)),      FIXED32(1)},
-		{FIXED32(0),                                FIXED32(0),                                FIXED32(-2.0 * FAR * NEAR / (FAR - NEAR)), FIXED32(0)}
+		{FIXED32(2.0 * NEAR / (RIGHT - LEFT)),      FIXED32(0), 							   FIXED32(0), 							FIXED32(0)},
+		{FIXED32(0), 						   	    FIXED32(2.0 * NEAR / (BOTTOM - TOP)),      FIXED32(0), 	                        FIXED32(0)},
+		{FIXED32(-(RIGHT + LEFT) / (RIGHT - LEFT)), FIXED32(-(BOTTOM + TOP) / (BOTTOM - TOP)), FIXED32(FAR / (FAR - NEAR)),         FIXED32(1)},
+		{FIXED32(0),                                FIXED32(0),                                FIXED32(-FAR * NEAR / (FAR - NEAR)), FIXED32(0)}
 	};
 	
 	fixed32 screen_transform[4][4] = {
