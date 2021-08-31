@@ -74,15 +74,6 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 	transform_time = timer_ticks() - transform_start;
 	load_start = timer_ticks();
 
-	// uint32_t colors[6] = {
-	// 	0xFF0000FF,
-	// 	0x00FF00FF,
-	// 	0x0000FFFF,
-	// 	0xFFFF00FF,
-	// 	0xFF00FFFF,
-	// 	0x00FFFFFF
-	// };
-
 	for (int i = 0; i < sizeof(indices) / sizeof(indices[0]); i++) {
 		poll_rdp();
 
@@ -107,11 +98,6 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 			vertex_colors[i3][0], vertex_colors[i3][1], vertex_colors[i3][2],
 			MUL_FX32(tex_coords[(i % 2) * 3 + 2][0], transformed_vertices[i3][2]), MUL_FX32(tex_coords[(i % 2) * 3 + 2][1], transformed_vertices[i3][2])
 		};
-
-		// if (i % 2 == 0) {
-		// 	load_sync();
-		// // 	load_color(colors[i / 2]);
-		// }
 
 		load_triangle_verts(v1, v2, v3);
 	}
