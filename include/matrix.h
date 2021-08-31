@@ -12,6 +12,6 @@ void matrix_rotate_x(Matrix4 *out, float angle);
 void matrix_rotate_y(Matrix4 *out, float angle);
 void matrix_rotate_z(Matrix4 *out, float angle);
 
-void matrix_perspective(Matrix4 *out, float left, float right, float top, float bottom, float near, float far);
+void matrix_perspective(Matrix4 *out, float fov, float near, float far);
 
 #endif

@@ -76,11 +76,12 @@ void matrix_rotate_z(Matrix4 *out, float angle) {
 	)
 }
 
-void matrix_perspective(Matrix4 *out, float left, float right, float top, float bottom, float near, float far) {
+void matrix_perspective(Matrix4 *out, float fov, float near, float far) {
+	float hs = 1.f / tanf(fov / 2);
 	LOAD_MATRIX(out->m,
-		     2.0 * near / (right - left),      							 0, 					    0, 0,
-									   0, 	   2.0 * near / (bottom - top),        					0, 0,
-		-(right + left) / (right - left), -(bottom + top) / (bottom - top),      -near / (far - near), 1,
-									   0,                                0, far * near / (far - near), 0
+		hs,  0, 					    0, 0,
+		 0, hs,        				    0, 0,
+		 0,  0,      -near / (far - near), 1,
+		 0,  0, far * near / (far - near), 0
 	)
 }

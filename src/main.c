@@ -16,12 +16,9 @@ extern uint16_t *__safe_buffer[];
 
 static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
 
-#define LEFT  (-1.0)
-#define RIGHT (1.0)
-#define TOP (-1.0)
-#define BOTTOM (1.0)
-#define NEAR (1.0)
-#define FAR (80.0)
+#define FOV 60
+#define NEAR 1.0
+#define FAR 1000.0
 
 void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 	char szBuffer[64];
@@ -108,8 +105,8 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 void make_view_matrix(Matrix4 *out) {
 	Matrix4 camera_transform, perspective, screen_scale, screen_translate;
 
-	matrix_translate(&camera_transform, 0, 0, 30);
-	matrix_perspective(&perspective, LEFT, RIGHT, TOP, BOTTOM, NEAR, FAR);
+	matrix_translate(&camera_transform, 0, 0, 40);
+	matrix_perspective(&perspective, FOV * M_PI / 180, NEAR, FAR);
 	matrix_scale(&screen_scale, 160, 160, 1);
 	matrix_translate(&screen_translate, 160, 120, 0);
 	
