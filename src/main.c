@@ -9,35 +9,11 @@
 #include "dispatch.h"
 #include "profile.h"
 #include "triangle.h"
+#include "data.h"
 
 extern uint16_t *__safe_buffer[];
 
 static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
-
-static uint32_t texture[] = {
-	0x11010101, 0x10101011,
-	0x10000000, 0x00000001,
-	0x00400040, 0x00222000,
-	0x10040400, 0x02000201,
-	0x00004000, 0x02000200,
-	0x10040400, 0x02000201,
-	0x00400040, 0x00222000,
-	0x10000000, 0x00000001,
-	0x10000000, 0x00000001,
-	0x00005000, 0x00303000,
-	0x10005000, 0x03030301,
-	0x00555550, 0x03000300,
-	0x10005000, 0x00303001,
-	0x00005000, 0x00030000,
-	0x10000000, 0x00000001,
-	0x11010101, 0x10101011
-};
-
-static uint16_t palette[] = {
-	0x0000, 0xFFFE, 0x1ABE, 0xF376,
-	0xFB86, 0x1F9E, 0x0000, 0x0000,
-	0x0000, 0x0000, 0x0000, 0x0000
-};
 
 #define LEFT  (-1.0)
 #define RIGHT (1.0)
@@ -56,52 +32,6 @@ void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 
 	graphics_draw_text(disp, x, y, szBuffer);
 }
-
-static const fixed32 vertices[8][3] = {
-	{FIXED32(-2), FIXED32(-2), FIXED32(-2)},
-	{FIXED32( 2), FIXED32(-2), FIXED32(-2)},
-	{FIXED32( 2), FIXED32( 2), FIXED32(-2)},
-	{FIXED32(-2), FIXED32( 2), FIXED32(-2)},
-	{FIXED32(-2), FIXED32(-2), FIXED32( 2)},
-	{FIXED32( 2), FIXED32(-2), FIXED32( 2)},
-	{FIXED32( 2), FIXED32( 2), FIXED32( 2)},
-	{FIXED32(-2), FIXED32( 2), FIXED32( 2)}
-};
-
-static const fixed32 vertex_colors[8][3] = {
-	{FIXED32(  0), FIXED32(  0), FIXED32(  0)},
-	{FIXED32(256), FIXED32(  0), FIXED32(  0)},
-	{FIXED32(256), FIXED32(256), FIXED32(  0)},
-	{FIXED32(  0), FIXED32(256), FIXED32(  0)},
-	{FIXED32(  0), FIXED32(  0), FIXED32(256)},
-	{FIXED32(256), FIXED32(  0), FIXED32(256)},
-	{FIXED32(256), FIXED32(256), FIXED32(256)},
-	{FIXED32(  0), FIXED32(256), FIXED32(256)}
-};
-
-static const fixed32 tex_coords[6][2] = {
-	{FIXED32(-16), FIXED32(-16)},
-	{FIXED32(496), FIXED32(496)},
-	{FIXED32(496), FIXED32(-16)},
-	{FIXED32(-16), FIXED32(-16)},
-	{FIXED32(-16), FIXED32(496)},
-	{FIXED32(496), FIXED32(496)}
-};
-
-static const int indices[12][3] = {
-	{0, 2, 1},
-	{0, 3, 2},
-	{4, 6, 5},
-	{4, 7, 6},
-	{4, 3, 0},
-	{4, 7, 3},
-	{1, 6, 5},
-	{1, 2, 6},
-	{4, 1, 5},
-	{4, 0, 1},
-	{6, 3, 2},
-	{6, 7, 3}
-};
 
 static fixed32 transformed_vertices[8][3];
 
