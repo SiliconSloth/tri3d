@@ -31,6 +31,16 @@ void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 	graphics_draw_text(disp, x, y, szBuffer);
 }
 
+void draw_point(display_context_t disp, int x, int y, uint32_t color) {
+	if (x >= 1 && x < 319 && y >= 1 && y < 239) {
+		graphics_draw_pixel(disp, x,   y,   color);
+		graphics_draw_pixel(disp, x+1, y,   color);
+		graphics_draw_pixel(disp, x-1, y,   color);
+		graphics_draw_pixel(disp, x,   y+1, color);
+		graphics_draw_pixel(disp, x,   y-1, color);
+	}
+}
+
 static fixed32 transformed_vertices[8][3];
 
 void load_cube(float x, float y, float z, Matrix4 *view_transform) {
@@ -154,6 +164,7 @@ int main(void){
 		run_frame_setup(__safe_buffer[disp-1], &z_buffer, &texture, &palette);
 		// run_frame_setup(&z_buffer, __safe_buffer[disp-1], &texture, &palette);
 
+		num_debug = 0;
 		for (int z = 0; z < 4; z++) {
 			for (int y = 0; y < 4; y++) {
 				for (int x = 0; x < 4; x++) {
@@ -167,6 +178,10 @@ int main(void){
 		// for (size_t i = 0; i < 320 * 240; i++) {
 		// 	__safe_buffer[disp - 1][i] = __safe_buffer[disp - 1][i] & 0xF800;
 		// }
+
+		for (int i = 0; i < num_debug; i++) {
+			draw_point(disp, debug_xs[i], debug_ys[i], 0xFFFFFFFF);
+		}
 
 		graphics_printf(disp, 20, 20, "%u", COUNTS_PER_SECOND / total_cpu_time);
 		// graphics_printf(disp, 20, 40, "%8lu", cpu_time);

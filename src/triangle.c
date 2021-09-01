@@ -3,6 +3,10 @@
 #include "dispatch.h"
 #include "triangle.h"
 
+int32_t debug_xs[4096];
+int32_t debug_ys[4096];
+uint32_t num_debug = 0;
+
 void compute_gradients(fixed32 y1, fixed32 a1,
 					   fixed32 y2, fixed32 a2,
 					   fixed32 y3, fixed32 a3,
@@ -131,6 +135,15 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 
 void load_triangle_verts(VertexInfo v1, VertexInfo v2, VertexInfo v3) {
 	TriangleCoeffs coeffs;
+	debug_xs[num_debug] = v1.x / 65536;
+	debug_ys[num_debug] = v1.y / 65536;
+	num_debug++;
+	debug_xs[num_debug] = v2.x / 65536;
+	debug_ys[num_debug] = v2.y / 65536;
+	num_debug++;
+	debug_xs[num_debug] = v3.x / 65536;
+	debug_ys[num_debug] = v3.y / 65536;
+	num_debug++;
 	compute_triangle_coefficients(&coeffs, v1, v2, v3);
 	load_triangle(coeffs);
 }
