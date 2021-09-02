@@ -133,7 +133,20 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	coeffs->dzdy = 0;
 }
 
+void normalize_vertex(VertexInfo *v) {
+	v->x = DIV_FX32(v->x, v->w);
+	v->y = DIV_FX32(v->y, v->w);
+	v->z = DIV_FX32(v->z, v->w);
+
+	v->s = MUL_FX32(v->s, v->z);
+	v->t = MUL_FX32(v->t, v->z);
+}
+
 void load_triangle_verts(VertexInfo v1, VertexInfo v2, VertexInfo v3) {
+	normalize_vertex(&v1);
+	normalize_vertex(&v2);
+	normalize_vertex(&v3);
+
 	TriangleCoeffs coeffs;
 	debug_xs[num_debug] = v1.x / 65536;
 	debug_ys[num_debug] = v1.y / 65536;

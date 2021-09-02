@@ -72,6 +72,7 @@ typedef struct {
 	fixed32 x;
 	fixed32 y;
 	fixed32 z;
+	fixed32 w;
 
 	fixed32 r;
 	fixed32 g;

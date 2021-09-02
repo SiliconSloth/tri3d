@@ -41,7 +41,7 @@ void draw_point(display_context_t disp, int x, int y, uint32_t color) {
 	}
 }
 
-static fixed32 transformed_vertices[8][3];
+static fixed32 transformed_vertices[8][4];
 
 void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 	transform_start = timer_ticks();
@@ -66,14 +66,7 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 			for (int k = 0; k < 4; k++) {
 				sum += MUL_FX32(transformation.m[k][i], k == 3? FIXED32(1) : vertices[j][k]);
 			}
-
-			if (i < 3) {
-				transformed_vertices[j][i] = sum;
-			} else {
-				transformed_vertices[j][0] = DIV_FX32(transformed_vertices[j][0], sum);
-				transformed_vertices[j][1] = DIV_FX32(transformed_vertices[j][1], sum);
-				transformed_vertices[j][2] = DIV_FX32(transformed_vertices[j][2], sum);
-			}
+			transformed_vertices[j][i] = sum;
 		}
 	}
 
@@ -89,21 +82,21 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 		int i3 = indices[i][2];
 
 		VertexInfo v1 = {
-			transformed_vertices[i1][0], transformed_vertices[i1][1], transformed_vertices[i1][2],
+			transformed_vertices[i1][0], transformed_vertices[i1][1], transformed_vertices[i1][2], transformed_vertices[i1][3],
 			vertex_colors[i1][0], vertex_colors[i1][1], vertex_colors[i1][2],
-			MUL_FX32(tex_coords[(i % 2) * 3][0], transformed_vertices[i1][2]), MUL_FX32(tex_coords[(i % 2) * 3][1], transformed_vertices[i1][2])
+			tex_coords[(i % 2) * 3][0], tex_coords[(i % 2) * 3][1]
 		};
 			
 		VertexInfo v2 = {
-			transformed_vertices[i2][0], transformed_vertices[i2][1], transformed_vertices[i2][2],
+			transformed_vertices[i2][0], transformed_vertices[i2][1], transformed_vertices[i2][2], transformed_vertices[i2][3],
 			vertex_colors[i2][0], vertex_colors[i2][1], vertex_colors[i2][2],
-			MUL_FX32(tex_coords[(i % 2) * 3 + 1][0], transformed_vertices[i2][2]), MUL_FX32(tex_coords[(i % 2) * 3 + 1][1], transformed_vertices[i2][2])
+			tex_coords[(i % 2) * 3 + 1][0], tex_coords[(i % 2) * 3 + 1][1]
 		};
 
 		VertexInfo v3 = {
-			transformed_vertices[i3][0], transformed_vertices[i3][1], transformed_vertices[i3][2],
+			transformed_vertices[i3][0], transformed_vertices[i3][1], transformed_vertices[i3][2], transformed_vertices[i3][3],
 			vertex_colors[i3][0], vertex_colors[i3][1], vertex_colors[i3][2],
-			MUL_FX32(tex_coords[(i % 2) * 3 + 2][0], transformed_vertices[i3][2]), MUL_FX32(tex_coords[(i % 2) * 3 + 2][1], transformed_vertices[i3][2])
+			tex_coords[(i % 2) * 3 + 2][0], tex_coords[(i % 2) * 3 + 2][1]
 		};
 
 		load_triangle_verts(v1, v2, v3);
