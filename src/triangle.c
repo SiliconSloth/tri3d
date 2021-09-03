@@ -243,22 +243,16 @@ size_t clip_triangle(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box, Verte
 }
 
 void load_triangle_clipped(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box) {
-
 	VertexInfo clipped_verts[16];
 	size_t num_clipped = clip_triangle(v1, v2, v3, box, clipped_verts);
-
+	
 	for (int i = 0; i < num_clipped; i++) {
-		VertexInfo v = clipped_verts[i];
-		normalize_vertex(&v);
-
-		debug_xs[num_debug] = v.x / 65536;
-		debug_ys[num_debug] = v.y / 65536;
-		num_debug++;
+		normalize_vertex(clipped_verts + i);
 	}
 
-	normalize_vertex(&v1);
-	normalize_vertex(&v2);
-	normalize_vertex(&v3);
-
-	load_triangle_verts(v1, v2, v3);
+	if (num_clipped >= 3) {
+		for (int i = 1; i < num_clipped - 1; i++) {
+			load_triangle_verts(clipped_verts[0], clipped_verts[i], clipped_verts[i + 1]);
+		}
+	}
 }
