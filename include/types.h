@@ -82,4 +82,15 @@ typedef struct {
 	fixed32 t;
 } VertexInfo;
 
+typedef struct {
+	fixed32 min_x;
+	fixed32 max_x;
+
+	fixed32 min_y;
+	fixed32 max_y;
+
+	fixed32 min_z;
+	fixed32 max_z;
+} Box;
+
 #endif

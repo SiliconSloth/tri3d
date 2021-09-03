@@ -20,6 +20,12 @@ static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
 #define NEAR 1.0
 #define FAR 1000.0
 
+static Box clip_box = {
+	FIXED32(50), FIXED32(270),
+	FIXED32(50), FIXED32(190),
+	FIXED32(0), FIXED32(1)
+};
+
 void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
 	char szBuffer[64];
 
@@ -99,7 +105,7 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 			tex_coords[(i % 2) * 3 + 2][0], tex_coords[(i % 2) * 3 + 2][1]
 		};
 
-		load_triangle_clipped(v1, v2, v3, FIXED32(50), FIXED32(270), FIXED32(50), FIXED32(190), FIXED32(0), FIXED32(1));
+		load_triangle_clipped(v1, v2, v3, clip_box);
 	}
 
 	load_time = timer_ticks() - load_start;

@@ -137,6 +137,12 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	coeffs->dzdy = 0;
 }
 
+void load_triangle_verts(VertexInfo v1, VertexInfo v2, VertexInfo v3) {
+	TriangleCoeffs coeffs;
+	compute_triangle_coefficients(&coeffs, v1, v2, v3);
+	load_triangle(coeffs);
+}
+
 void normalize_vertex(VertexInfo *v) {
 	v->x = DIV_FX32(v->x, v->w);
 	v->y = DIV_FX32(v->y, v->w);
@@ -184,26 +190,23 @@ void clip_axis(fixed32 x1, fixed32 w1, fixed32 x2, fixed32 w2, fixed32 clip_x, b
 	}
 }
 
-void clip_line(VertexInfo v1, VertexInfo v2, fixed32 *p1, fixed32 *p2,
-		fixed32 min_x, fixed32 max_x, fixed32 min_y, fixed32 max_y, fixed32 min_z, fixed32 max_z) {
+void clip_line(VertexInfo v1, VertexInfo v2, Box box, fixed32 *p1, fixed32 *p2) {
 	*p1 = FIXED32(0);
 	*p2 = FIXED32(1);
 
-	clip_axis(v1.x, v1.w, v2.x, v2.w, min_x, true, p1, p2);
-	clip_axis(v1.x, v1.w, v2.x, v2.w, max_x, false, p1, p2);
+	clip_axis(v1.x, v1.w, v2.x, v2.w, box.min_x, true, p1, p2);
+	clip_axis(v1.x, v1.w, v2.x, v2.w, box.max_x, false, p1, p2);
 
-	clip_axis(v1.y, v1.w, v2.y, v2.w, min_y, true, p1, p2);
-	clip_axis(v1.y, v1.w, v2.y, v2.w, max_y, false, p1, p2);
+	clip_axis(v1.y, v1.w, v2.y, v2.w, box.min_y, true, p1, p2);
+	clip_axis(v1.y, v1.w, v2.y, v2.w, box.max_y, false, p1, p2);
 
-	clip_axis(v1.z, v1.w, v2.z, v2.w, min_z, true, p1, p2);
-	clip_axis(v1.z, v1.w, v2.z, v2.w, max_z, false, p1, p2);
+	clip_axis(v1.z, v1.w, v2.z, v2.w, box.min_z, true, p1, p2);
+	clip_axis(v1.z, v1.w, v2.z, v2.w, box.max_z, false, p1, p2);
 }
 
-void clip_edge(VertexInfo v1, VertexInfo v2, VertexInfo *out_verts, size_t *out_count, bool keep_1, bool keep_2, bool *kept_1, bool *kept_2,
-		fixed32 min_x, fixed32 max_x, fixed32 min_y, fixed32 max_y, fixed32 min_z, fixed32 max_z) {
-
+void clip_edge(VertexInfo v1, VertexInfo v2, Box box, VertexInfo *out_verts, size_t *out_count, bool keep_1, bool keep_2, bool *kept_1, bool *kept_2) {
 	fixed32 p1, p2;
-	clip_line(v1, v2, &p1, &p2, min_x, max_x, min_y, max_y, min_z, max_z);
+	clip_line(v1, v2, box, &p1, &p2);
 
 	*kept_1 = false;
 	*kept_2 = false;
@@ -228,30 +231,21 @@ void clip_edge(VertexInfo v1, VertexInfo v2, VertexInfo *out_verts, size_t *out_
 	}
 }
 
-size_t clip_triangle(VertexInfo v1, VertexInfo v2, VertexInfo v3, VertexInfo *out_verts,
-		fixed32 min_x, fixed32 max_x, fixed32 min_y, fixed32 max_y, fixed32 min_z, fixed32 max_z) {
-
+size_t clip_triangle(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box, VertexInfo *out_verts) {
 	size_t out_count = 0;
 	bool kept_v1, kept_last, kept_dummy;
 
-	clip_edge(v1, v2, out_verts, &out_count, true,       true,     &kept_v1,    &kept_last,  min_x, max_x, min_y, max_y, min_z, max_z);
-	clip_edge(v2, v3, out_verts, &out_count, !kept_last, true,     &kept_dummy, &kept_last,  min_x, max_x, min_y, max_y, min_z, max_z);
-	clip_edge(v3, v1, out_verts, &out_count, !kept_last, !kept_v1, &kept_dummy, &kept_dummy, min_x, max_x, min_y, max_y, min_z, max_z);
+	clip_edge(v1, v2, box, out_verts, &out_count, true,       true,     &kept_v1,    &kept_last);
+	clip_edge(v2, v3, box, out_verts, &out_count, !kept_last, true,     &kept_dummy, &kept_last);
+	clip_edge(v3, v1, box, out_verts, &out_count, !kept_last, !kept_v1, &kept_dummy, &kept_dummy);
 
 	return out_count;
 }
 
-void load_triangle_verts(VertexInfo v1, VertexInfo v2, VertexInfo v3) {
-	TriangleCoeffs coeffs;
-	compute_triangle_coefficients(&coeffs, v1, v2, v3);
-	load_triangle(coeffs);
-}
-
-void load_triangle_clipped(VertexInfo v1, VertexInfo v2, VertexInfo v3,
-		fixed32 min_x, fixed32 max_x, fixed32 min_y, fixed32 max_y, fixed32 min_z, fixed32 max_z) {
+void load_triangle_clipped(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box) {
 
 	VertexInfo clipped_verts[16];
-	size_t num_clipped = clip_triangle(v1, v2, v3, clipped_verts, min_x, max_x, min_y, max_y, min_z, max_z);
+	size_t num_clipped = clip_triangle(v1, v2, v3, box, clipped_verts);
 
 	for (int i = 0; i < num_clipped; i++) {
 		VertexInfo v = clipped_verts[i];

@@ -11,7 +11,6 @@ extern fixed32 min_v;
 extern fixed32 max_v;
 
 void load_triangle_verts(VertexInfo v1, VertexInfo v2, VertexInfo v3);
-void load_triangle_clipped(VertexInfo v1, VertexInfo v2, VertexInfo v3,
-		fixed32 min_x, fixed32 max_x, fixed32 min_y, fixed32 max_y, fixed32 min_z, fixed32 max_z);
+void load_triangle_clipped(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box);
 
 #endif
