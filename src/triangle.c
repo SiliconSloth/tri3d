@@ -4,13 +4,6 @@
 #include "dispatch.h"
 #include "triangle.h"
 
-int32_t debug_xs[4096];
-int32_t debug_ys[4096];
-uint32_t num_debug = 0;
-
-fixed32 min_v;
-fixed32 max_v;
-
 void compute_gradients(fixed32 y1, fixed32 a1,
 					   fixed32 y2, fixed32 a2,
 					   fixed32 y3, fixed32 a3,

@@ -163,9 +163,6 @@ int main(void){
 		run_frame_setup(__safe_buffer[disp-1], &z_buffer, &texture, &palette);
 		// run_frame_setup(&z_buffer, __safe_buffer[disp-1], &texture, &palette);
 
-		num_debug = 0;
-		min_v = FIXED32(9999);
-		max_v = FIXED32(-9999);
 		for (int z = 0; z < 4; z++) {
 			for (int y = 0; y < 4; y++) {
 				for (int x = 0; x < 4; x++) {
@@ -180,13 +177,9 @@ int main(void){
 		// 	__safe_buffer[disp - 1][i] = __safe_buffer[disp - 1][i] & 0xF800;
 		// }
 
-		for (int i = 0; i < num_debug; i++) {
-			draw_point(disp, debug_xs[i], debug_ys[i], 0xFFFFFFFF);
-		}
-
 		graphics_printf(disp, 20, 20, "%u", COUNTS_PER_SECOND / total_cpu_time);
-		graphics_printf(disp, 20, 40, "%8.2f", (float) min_v / 65536);
-		graphics_printf(disp, 20, 50, "%8.2f", (float) max_v / 65536);
+		
+		// graphics_printf(disp, 20, 40, "%8lu", cpu_time);
 		// graphics_printf(disp, 20, 50, "%8lu", rdp_time);
 		// graphics_printf(disp, 20, 70, "%8lu", total_cpu_time);
 		// graphics_printf(disp, 20, 80, "%8lu", total_rdp_time);
