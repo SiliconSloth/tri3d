@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "dispatch.h"
 #include "triangle.h"
@@ -145,6 +146,19 @@ void normalize_vertex(VertexInfo *v) {
 	v->t = MUL_FX32(v->t, v->z);
 }
 
+fixed32 interpolate(fixed32 a, fixed32 b, fixed32 p) {
+	return a + MUL_FX32(b - a, p);
+}
+
+VertexInfo interpolate_vertices(VertexInfo v1, VertexInfo v2, fixed32 p) {
+	VertexInfo out = {
+		interpolate(v1.x, v2.x, p), interpolate(v1.y, v2.y, p), interpolate(v1.z, v2.z, p), interpolate(v1.w, v2.w, p),
+		interpolate(v1.r, v2.r, p), interpolate(v1.g, v2.g, p), interpolate(v1.b, v2.b, p),
+		interpolate(v1.s, v2.s, p), interpolate(v1.t, v2.t, p)
+	};
+	return out;
+}
+
 fixed32 intersect_1d(fixed32 x1, fixed32 w1, fixed32 x2, fixed32 w2, fixed32 intersect_x, bool *upward) {
 	fixed32 d1 = x1 - MUL_FX32(w1, intersect_x);
 	fixed32 d2 = x2 - MUL_FX32(w2, intersect_x);
@@ -185,17 +199,46 @@ void clip_line(VertexInfo v1, VertexInfo v2, fixed32 *p1, fixed32 *p2,
 	clip_axis(v1.z, v1.w, v2.z, v2.w, max_z, false, p1, p2);
 }
 
-fixed32 interpolate(fixed32 a, fixed32 b, fixed32 p) {
-	return a + MUL_FX32(b - a, p);
+void clip_edge(VertexInfo v1, VertexInfo v2, VertexInfo *out_verts, size_t *out_count, bool keep_1, bool keep_2, bool *kept_1, bool *kept_2,
+		fixed32 min_x, fixed32 max_x, fixed32 min_y, fixed32 max_y, fixed32 min_z, fixed32 max_z) {
+
+	fixed32 p1, p2;
+	clip_line(v1, v2, &p1, &p2, min_x, max_x, min_y, max_y, min_z, max_z);
+
+	*kept_1 = false;
+	*kept_2 = false;
+	if (p1 < p2) {
+		if (p1 == FIXED32(0)) {
+			if (keep_1) {
+				out_verts[(*out_count)++] = v1;
+				*kept_1 = true;
+			}
+		} else {
+			out_verts[(*out_count)++] = interpolate_vertices(v1, v2, p1);
+		}
+
+		if (p2 == FIXED32(1)) {
+			if (keep_2) {
+				out_verts[(*out_count)++] = v2;
+				*kept_2 = true;
+			}
+		} else {
+			out_verts[(*out_count)++] = interpolate_vertices(v1, v2, p2);
+		}
+	}
 }
 
-VertexInfo interpolate_vertices(VertexInfo v1, VertexInfo v2, fixed32 p) {
-	VertexInfo out = {
-		interpolate(v1.x, v2.x, p), interpolate(v1.y, v2.y, p), interpolate(v1.z, v2.z, p), interpolate(v1.w, v2.w, p),
-		interpolate(v1.r, v2.r, p), interpolate(v1.g, v2.g, p), interpolate(v1.b, v2.b, p),
-		interpolate(v1.s, v2.s, p), interpolate(v1.t, v2.t, p)
-	};
-	return out;
+size_t clip_triangle(VertexInfo v1, VertexInfo v2, VertexInfo v3, VertexInfo *out_verts,
+		fixed32 min_x, fixed32 max_x, fixed32 min_y, fixed32 max_y, fixed32 min_z, fixed32 max_z) {
+
+	size_t out_count = 0;
+	bool kept_v1, kept_last, kept_dummy;
+
+	clip_edge(v1, v2, out_verts, &out_count, true,       true,     &kept_v1,    &kept_last,  min_x, max_x, min_y, max_y, min_z, max_z);
+	clip_edge(v2, v3, out_verts, &out_count, !kept_last, true,     &kept_dummy, &kept_last,  min_x, max_x, min_y, max_y, min_z, max_z);
+	clip_edge(v3, v1, out_verts, &out_count, !kept_last, !kept_v1, &kept_dummy, &kept_dummy, min_x, max_x, min_y, max_y, min_z, max_z);
+
+	return out_count;
 }
 
 void load_triangle_verts(VertexInfo v1, VertexInfo v2, VertexInfo v3) {
@@ -206,29 +249,16 @@ void load_triangle_verts(VertexInfo v1, VertexInfo v2, VertexInfo v3) {
 
 void load_triangle_clipped(VertexInfo v1, VertexInfo v2, VertexInfo v3,
 		fixed32 min_x, fixed32 max_x, fixed32 min_y, fixed32 max_y, fixed32 min_z, fixed32 max_z) {
-	fixed32 p1, p2;
-	clip_line(v1, v2, &p1, &p2, min_x, max_x, min_y, max_y, min_z, max_z);
 
-	if (p2 > p1) {
-		VertexInfo c1 = interpolate_vertices(v1, v2, p1);
-		VertexInfo c2 = interpolate_vertices(v1, v2, p2);
+	VertexInfo clipped_verts[16];
+	size_t num_clipped = clip_triangle(v1, v2, v3, clipped_verts, min_x, max_x, min_y, max_y, min_z, max_z);
 
-		normalize_vertex(&c1);
-		normalize_vertex(&c2);
+	for (int i = 0; i < num_clipped; i++) {
+		VertexInfo v = clipped_verts[i];
+		normalize_vertex(&v);
 
-		fixed32 val = p1;
-		if (val < min_v) {
-			min_v = val;
-		}
-		if (val > max_v) {
-			max_v = val;
-		}
-
-		debug_xs[num_debug] = c1.x / 65536;
-		debug_ys[num_debug] = c1.y / 65536;
-		num_debug++;
-		debug_xs[num_debug] = c2.x / 65536;
-		debug_ys[num_debug] = c2.y / 65536;
+		debug_xs[num_debug] = v.x / 65536;
+		debug_ys[num_debug] = v.y / 65536;
 		num_debug++;
 	}
 
