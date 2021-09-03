@@ -7,6 +7,9 @@ int32_t debug_xs[4096];
 int32_t debug_ys[4096];
 uint32_t num_debug = 0;
 
+fixed32 min_v;
+fixed32 max_v;
+
 void compute_gradients(fixed32 y1, fixed32 a1,
 					   fixed32 y2, fixed32 a2,
 					   fixed32 y3, fixed32 a3,
@@ -142,21 +145,84 @@ void normalize_vertex(VertexInfo *v) {
 	v->t = MUL_FX32(v->t, v->z);
 }
 
+fixed32 intersect_x_plane(VertexInfo v1, VertexInfo v2, fixed32 plane_x, bool *inward) {
+	fixed32 d1 = v1.x - MUL_FX32(v1.w, plane_x);
+	fixed32 d2 = v2.x - MUL_FX32(v2.w, plane_x);
+
+	*inward = d1 > d2;
+
+	if (d1 == d2) {
+		return d1 > 0? FIXED32(-1) : FIXED32(2);
+	}
+
+	return DIV_FX32(d1, d1 - d2);
+}
+
+void clip_line(VertexInfo v1, VertexInfo v2, fixed32 min_x, fixed32 *p1, fixed32 *p2) {
+	*p1 = FIXED32(0);
+	*p2 = FIXED32(1);
+	
+	bool inward;
+	fixed32 p = intersect_x_plane(v1, v2, FIXED32(50), &inward);
+	if (inward) {
+		if (p < *p2) {
+			*p2 = p;
+		}
+	} else if (p > *p1) {
+		*p1 = p;
+	}
+}
+
+fixed32 interpolate(fixed32 a, fixed32 b, fixed32 p) {
+	return a + MUL_FX32(b - a, p);
+}
+
+VertexInfo interpolate_vertices(VertexInfo v1, VertexInfo v2, fixed32 p) {
+	VertexInfo out = {
+		interpolate(v1.x, v2.x, p), interpolate(v1.y, v2.y, p), interpolate(v1.z, v2.z, p), interpolate(v1.w, v2.w, p),
+		interpolate(v1.r, v2.r, p), interpolate(v1.g, v2.g, p), interpolate(v1.b, v2.b, p),
+		interpolate(v1.s, v2.s, p), interpolate(v1.t, v2.t, p)
+	};
+	return out;
+}
+
 void load_triangle_verts(VertexInfo v1, VertexInfo v2, VertexInfo v3) {
+	TriangleCoeffs coeffs;
+	compute_triangle_coefficients(&coeffs, v1, v2, v3);
+	load_triangle(coeffs);
+}
+
+void load_triangle_clipped(VertexInfo v1, VertexInfo v2, VertexInfo v3,
+		fixed32 min_x, fixed32 max_x, fixed32 min_y, fixed32 max_y, fixed32 min_z, fixed32 max_z) {
+	fixed32 p1, p2;
+	clip_line(v1, v2, min_x, &p1, &p2);
+
+	if (p2 > p1) {
+		VertexInfo c1 = interpolate_vertices(v1, v2, p1);
+		VertexInfo c2 = interpolate_vertices(v1, v2, p2);
+
+		normalize_vertex(&c1);
+		normalize_vertex(&c2);
+
+		fixed32 val = p1;
+		if (val < min_v) {
+			min_v = val;
+		}
+		if (val > max_v) {
+			max_v = val;
+		}
+
+		debug_xs[num_debug] = c1.x / 65536;
+		debug_ys[num_debug] = c1.y / 65536;
+		num_debug++;
+		debug_xs[num_debug] = c2.x / 65536;
+		debug_ys[num_debug] = c2.y / 65536;
+		num_debug++;
+	}
+
 	normalize_vertex(&v1);
 	normalize_vertex(&v2);
 	normalize_vertex(&v3);
 
-	TriangleCoeffs coeffs;
-	debug_xs[num_debug] = v1.x / 65536;
-	debug_ys[num_debug] = v1.y / 65536;
-	num_debug++;
-	debug_xs[num_debug] = v2.x / 65536;
-	debug_ys[num_debug] = v2.y / 65536;
-	num_debug++;
-	debug_xs[num_debug] = v3.x / 65536;
-	debug_ys[num_debug] = v3.y / 65536;
-	num_debug++;
-	compute_triangle_coefficients(&coeffs, v1, v2, v3);
-	load_triangle(coeffs);
+	load_triangle_verts(v1, v2, v3);
 }

@@ -99,7 +99,7 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 			tex_coords[(i % 2) * 3 + 2][0], tex_coords[(i % 2) * 3 + 2][1]
 		};
 
-		load_triangle_verts(v1, v2, v3);
+		load_triangle_clipped(v1, v2, v3, FIXED32(50), FIXED32(270), FIXED32(50), FIXED32(190), FIXED32(0), FIXED32(1));
 	}
 
 	load_time = timer_ticks() - load_start;
@@ -158,6 +158,8 @@ int main(void){
 		// run_frame_setup(&z_buffer, __safe_buffer[disp-1], &texture, &palette);
 
 		num_debug = 0;
+		min_v = FIXED32(9999);
+		max_v = FIXED32(-9999);
 		for (int z = 0; z < 4; z++) {
 			for (int y = 0; y < 4; y++) {
 				for (int x = 0; x < 4; x++) {
@@ -177,7 +179,8 @@ int main(void){
 		}
 
 		graphics_printf(disp, 20, 20, "%u", COUNTS_PER_SECOND / total_cpu_time);
-		// graphics_printf(disp, 20, 40, "%8lu", cpu_time);
+		graphics_printf(disp, 20, 40, "%8.2f", (float) min_v / 65536);
+		graphics_printf(disp, 20, 50, "%8.2f", (float) max_v / 65536);
 		// graphics_printf(disp, 20, 50, "%8lu", rdp_time);
 		// graphics_printf(disp, 20, 70, "%8lu", total_cpu_time);
 		// graphics_printf(disp, 20, 80, "%8lu", total_rdp_time);
