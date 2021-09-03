@@ -21,8 +21,8 @@ static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
 #define FAR 1000.0
 
 static Box clip_box = {
-	FIXED32(50), FIXED32(270),
-	FIXED32(50), FIXED32(190),
+	FIXED32(-1), FIXED32(320),
+	FIXED32(-1), FIXED32(240),
 	FIXED32(0), FIXED32(1)
 };
 
@@ -114,7 +114,7 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 void make_view_matrix(Matrix4 *out) {
 	Matrix4 camera_transform, perspective, screen_scale, screen_translate;
 
-	matrix_translate(&camera_transform, 0, 0, 40);
+	matrix_translate(&camera_transform, 0, 0, 10);
 	matrix_perspective(&perspective, FOV * M_PI / 180, NEAR, FAR);
 	matrix_scale(&screen_scale, 160, 160, 1);
 	matrix_translate(&screen_translate, 160, 120, 0);
