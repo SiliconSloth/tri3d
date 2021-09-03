@@ -194,13 +194,15 @@ void clip_line(VertexInfo v1, VertexInfo v2, Box box, fixed32 *p1, fixed32 *p2) 
 	*p1 = FIXED32(0);
 	*p2 = FIXED32(1);
 
-	clip_axis(v1.x, v1.w, v2.x, v2.w, box.min_x, true, p1, p2);
-	clip_axis(v1.x, v1.w, v2.x, v2.w, box.max_x, false, p1, p2);
+	// TODO: Must add intersections with edges of clip box to support multi-axis clipping
 
-	clip_axis(v1.y, v1.w, v2.y, v2.w, box.min_y, true, p1, p2);
-	clip_axis(v1.y, v1.w, v2.y, v2.w, box.max_y, false, p1, p2);
+	// clip_axis(v1.x, v1.w, v2.x, v2.w, box.min_x, true, p1, p2);
+	// clip_axis(v1.x, v1.w, v2.x, v2.w, box.max_x, false, p1, p2);
 
-	clip_axis(v1.z, v1.w, v2.z, v2.w, box.min_z, true, p1, p2);
+	// clip_axis(v1.y, v1.w, v2.y, v2.w, box.min_y, true, p1, p2);
+	// clip_axis(v1.y, v1.w, v2.y, v2.w, box.max_y, false, p1, p2);
+
+	// clip_axis(v1.z, v1.w, v2.z, v2.w, box.min_z, true, p1, p2);
 	clip_axis(v1.z, v1.w, v2.z, v2.w, box.max_z, false, p1, p2);
 }
 
