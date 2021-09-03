@@ -145,32 +145,44 @@ void normalize_vertex(VertexInfo *v) {
 	v->t = MUL_FX32(v->t, v->z);
 }
 
-fixed32 intersect_x_plane(VertexInfo v1, VertexInfo v2, fixed32 plane_x, bool *inward) {
-	fixed32 d1 = v1.x - MUL_FX32(v1.w, plane_x);
-	fixed32 d2 = v2.x - MUL_FX32(v2.w, plane_x);
+fixed32 intersect_1d(fixed32 x1, fixed32 w1, fixed32 x2, fixed32 w2, fixed32 intersect_x, bool *upward) {
+	fixed32 d1 = x1 - MUL_FX32(w1, intersect_x);
+	fixed32 d2 = x2 - MUL_FX32(w2, intersect_x);
 
-	*inward = d1 > d2;
+	*upward = d2 > d1;
 
 	if (d1 == d2) {
-		return d1 > 0? FIXED32(-1) : FIXED32(2);
+		return d1 > 0? FIXED32(2) : FIXED32(-1);
 	}
 
 	return DIV_FX32(d1, d1 - d2);
 }
 
-void clip_line(VertexInfo v1, VertexInfo v2, fixed32 min_x, fixed32 *p1, fixed32 *p2) {
-	*p1 = FIXED32(0);
-	*p2 = FIXED32(1);
-	
-	bool inward;
-	fixed32 p = intersect_x_plane(v1, v2, FIXED32(50), &inward);
-	if (inward) {
+void clip_axis(fixed32 x1, fixed32 w1, fixed32 x2, fixed32 w2, fixed32 clip_x, bool keep_greater, fixed32 *p1, fixed32 *p2) {
+	bool upward;
+	fixed32 p = intersect_1d(x1, w1, x2, w2, clip_x, &upward);
+	if (upward != keep_greater) {
 		if (p < *p2) {
 			*p2 = p;
 		}
 	} else if (p > *p1) {
 		*p1 = p;
 	}
+}
+
+void clip_line(VertexInfo v1, VertexInfo v2, fixed32 *p1, fixed32 *p2,
+		fixed32 min_x, fixed32 max_x, fixed32 min_y, fixed32 max_y, fixed32 min_z, fixed32 max_z) {
+	*p1 = FIXED32(0);
+	*p2 = FIXED32(1);
+
+	clip_axis(v1.x, v1.w, v2.x, v2.w, min_x, true, p1, p2);
+	clip_axis(v1.x, v1.w, v2.x, v2.w, max_x, false, p1, p2);
+
+	clip_axis(v1.y, v1.w, v2.y, v2.w, min_y, true, p1, p2);
+	clip_axis(v1.y, v1.w, v2.y, v2.w, max_y, false, p1, p2);
+
+	clip_axis(v1.z, v1.w, v2.z, v2.w, min_z, true, p1, p2);
+	clip_axis(v1.z, v1.w, v2.z, v2.w, max_z, false, p1, p2);
 }
 
 fixed32 interpolate(fixed32 a, fixed32 b, fixed32 p) {
@@ -195,7 +207,7 @@ void load_triangle_verts(VertexInfo v1, VertexInfo v2, VertexInfo v3) {
 void load_triangle_clipped(VertexInfo v1, VertexInfo v2, VertexInfo v3,
 		fixed32 min_x, fixed32 max_x, fixed32 min_y, fixed32 max_y, fixed32 min_z, fixed32 max_z) {
 	fixed32 p1, p2;
-	clip_line(v1, v2, min_x, &p1, &p2);
+	clip_line(v1, v2, &p1, &p2, min_x, max_x, min_y, max_y, min_z, max_z);
 
 	if (p2 > p1) {
 		VertexInfo c1 = interpolate_vertices(v1, v2, p1);
