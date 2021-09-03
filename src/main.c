@@ -17,13 +17,13 @@ extern uint16_t *__safe_buffer[];
 static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
 
 #define FOV 60
-#define NEAR 1.0
-#define FAR 1000.0
+#define NEAR 4.0
+#define FAR 500.0
 
 static Box clip_box = {
 	FIXED32(-1), FIXED32(320),
 	FIXED32(-1), FIXED32(240),
-	FIXED32(0), FIXED32(0.5)
+	FIXED32(0), FIXED32(1)
 };
 
 void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
