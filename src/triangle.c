@@ -158,23 +158,33 @@ VertexInfo interpolate_vertices(VertexInfo v1, VertexInfo v2, fixed32 p) {
 	return out;
 }
 
-fixed32 intersect_1d(fixed32 x1, fixed32 w1, fixed32 x2, fixed32 w2, fixed32 intersect_x, bool *upward) {
+#define UPWARD 0
+#define DOWNWARD 1
+#define FLAT_ABOVE 2
+#define FLAT_BELOW 3
+
+uint8_t intersect_1d(fixed32 x1, fixed32 w1, fixed32 x2, fixed32 w2, fixed32 intersect_x, fixed32 *p) {
 	fixed32 d1 = x1 - MUL_FX32(w1, intersect_x);
 	fixed32 d2 = x2 - MUL_FX32(w2, intersect_x);
 
-	*upward = d2 > d1;
-
-	if (d1 == d2) {
-		return d1 > 0? FIXED32(2) : FIXED32(-1);
+	if (d1 - d2 < 0x10 && d2 - d1 < 0x10) {
+		return d1 > 0? FLAT_ABOVE : FLAT_BELOW;
 	}
 
-	return DIV_FX32(d1, d1 - d2);
+	*p = DIV_FX32(d1, d1 - d2);
+	return d2 > d1? UPWARD : DOWNWARD;
 }
 
 void clip_axis(fixed32 x1, fixed32 w1, fixed32 x2, fixed32 w2, fixed32 clip_x, bool keep_greater, fixed32 *p1, fixed32 *p2) {
-	bool upward;
-	fixed32 p = intersect_1d(x1, w1, x2, w2, clip_x, &upward);
-	if (upward != keep_greater) {
+	fixed32 p;
+	uint8_t direction = intersect_1d(x1, w1, x2, w2, clip_x, &p);
+
+	if (direction == FLAT_ABOVE || direction == FLAT_BELOW) {
+		if ((direction == FLAT_ABOVE) != keep_greater) {
+			*p1 = 2;
+			*p2 = -1;
+		}
+	} else if ((direction == UPWARD) != keep_greater) {
 		if (p < *p2) {
 			*p2 = p;
 		}
