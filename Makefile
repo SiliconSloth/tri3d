@@ -8,7 +8,7 @@ HEADERPATH = $(ROOTDIR)/mips64-elf/lib
 N64TOOL = $(ROOTDIR)/bin/n64tool
 HEADERNAME = header
 LINK_FLAGS = -L$(ROOTDIR)/mips64-elf/lib -ldragon -lc -lm -ldragonsys -Tn64.ld
-CFLAGS = -std=gnu99 -march=vr4300 -mtune=vr4300 -Wall -Werror -c -I$(ROOTDIR)/mips64-elf/include -Iinclude
+CFLAGS = -std=gnu99 -march=vr4300 -mtune=vr4300 -Wall -Werror -c -I$(ROOTDIR)/mips64-elf/include -Iinclude -O3
 ASFLAGS = -mtune=vr4300 -march=vr4300
 CC = $(GCCN64PREFIX)gcc
 AS = $(GCCN64PREFIX)as
