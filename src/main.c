@@ -18,7 +18,7 @@ static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
 
 #define FOV 60
 #define NEAR 4.0
-#define FAR 500.0
+#define FAR 20.0
 
 fixed32 camera_z;
 

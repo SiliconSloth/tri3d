@@ -62,10 +62,16 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	compute_gradients(y1, v1.g, y2, v2.g, y3, v3.g, x2, x_mid, &dgde, &dgdx);
 	compute_gradients(y1, v1.b, y2, v2.b, y3, v3.b, x2, x_mid, &dbde, &dbdx);
 
+	fixed32 iw1 = DIV_FX32(FIXED32(1), v1.w);
+	fixed32 iw2 = DIV_FX32(FIXED32(1), v2.w);
+	fixed32 iw3 = DIV_FX32(FIXED32(1), v3.w);
+
 	fixed32 dsde, dtde;
 	fixed32 dsdx, dtdx;
+	fixed32 dwde, dwdx;
 	compute_gradients(y1, v1.s, y2, v2.s, y3, v3.s, x2, x_mid, &dsde, &dsdx);
 	compute_gradients(y1, v1.t, y2, v2.t, y3, v3.t, x2, x_mid, &dtde, &dtdx);
+	compute_gradients(y1, iw1, y2, iw2, y3, iw3, x2, x_mid, &dwde, &dwdx);
 
 	#define DEPTH_MUL 0x7C00
 
@@ -75,6 +81,10 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 	fixed32 z = z1 - MUL_FX32(y1_frac, dzde);
 	dzde *= DEPTH_MUL;
 	dzdx *= DEPTH_MUL;
+
+	fixed32 w = iw1 - MUL_FX32(y1_frac, dwde);
+	dwde *= DEPTH_MUL;
+	dwdx *= DEPTH_MUL;
 
 	coeffs->major = major;
 
@@ -110,23 +120,23 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 
 	coeffs->s = v1.s - MUL_FX32(y1_frac, dsde);
 	coeffs->t = v1.t - MUL_FX32(y1_frac, dtde);
-	coeffs->w = z * DEPTH_MUL;
+	coeffs->w = w * DEPTH_MUL;
 
 	coeffs->dsdx = dsdx;
 	coeffs->dtdx = dtdx;
-	coeffs->dwdx = dzdx;
+	coeffs->dwdx = dwdx;
 
 	coeffs->dsde = dsde;
 	coeffs->dtde = dtde;
-	coeffs->dwde = dzde;
+	coeffs->dwde = dwde;
 
 	coeffs->dsdy = 0;
 	coeffs->dtdy = 0;
 	coeffs->dwdy = 0;
 
-	coeffs->z = (FIXED32(1) - z) * DEPTH_MUL;
-	coeffs->dzdx = -dzdx;
-	coeffs->dzde = -dzde;
+	coeffs->z = z * DEPTH_MUL;
+	coeffs->dzdx = dzdx;
+	coeffs->dzde = dzde;
 	coeffs->dzdy = 0;
 }
 
@@ -141,8 +151,8 @@ void normalize_vertex(VertexInfo *v) {
 	v->y = DIV_FX32(v->y, v->w);
 	v->z = DIV_FX32(v->z, v->w);
 
-	v->s = MUL_FX32(v->s, v->z);
-	v->t = MUL_FX32(v->t, v->z);
+	v->s = DIV_FX32(v->s, v->w);
+	v->t = DIV_FX32(v->t, v->w);
 }
 
 fixed32 interpolate(fixed32 a, fixed32 b, fixed32 p) {
@@ -205,7 +215,7 @@ void clip_line(VertexInfo v1, VertexInfo v2, Box box, fixed32 *p1, fixed32 *p2) 
 	// clip_axis(v1.y, v1.w, v2.y, v2.w, box.min_y, true, p1, p2);
 	// clip_axis(v1.y, v1.w, v2.y, v2.w, box.max_y, false, p1, p2);
 
-	// clip_axis(v1.z, v1.w, v2.z, v2.w, box.min_z, true, p1, p2);
+	clip_axis(v1.z, v1.w, v2.z, v2.w, box.min_z, true, p1, p2);
 	clip_axis(v1.z, v1.w, v2.z, v2.w, box.max_z, false, p1, p2);
 }
 
@@ -295,7 +305,7 @@ void load_triangle_culled(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box, 
 	p1.z -= camera_z / CULL_DIV;
 	fixed32 dp = dot_product(p1, normal);
 
-	if (dp >= FIXED32(0)) {
+	if (dp <= FIXED32(0)) {
 		load_triangle_clipped(v1, v2, v3, box);
 	}
 }

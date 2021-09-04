@@ -81,7 +81,7 @@ void matrix_perspective(Matrix4 *out, float fov, float near, float far) {
 	LOAD_MATRIX(out->m,
 		hs,  0, 					    0, 0,
 		 0, hs,        				    0, 0,
-		 0,  0,      -near / (far - near), 1,
-		 0,  0, far * near / (far - near), 0
+		 0,  0,      far / (far - near), 1,
+		 0,  0, -far * near / (far - near), 0
 	)
 }
