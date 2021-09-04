@@ -20,6 +20,8 @@ static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
 #define NEAR 4.0
 #define FAR 500.0
 
+fixed32 camera_z;
+
 static Box clip_box = {
 	FIXED32(-1), FIXED32(320),
 	FIXED32(-1), FIXED32(240),
@@ -105,7 +107,7 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 			tex_coords[(i % 2) * 3 + 2][0], tex_coords[(i % 2) * 3 + 2][1]
 		};
 
-		load_triangle_clipped(v1, v2, v3, clip_box);
+		load_triangle_culled(v1, v2, v3, clip_box, camera_z);
 	}
 
 	load_time = timer_ticks() - load_start;
@@ -118,6 +120,8 @@ void make_view_matrix(Matrix4 *out) {
 	matrix_perspective(&perspective, FOV * M_PI / 180, NEAR, FAR);
 	matrix_scale(&screen_scale, 160, 160, 1);
 	matrix_translate(&screen_translate, 160, 120, 0);
+
+	camera_z = perspective.m[3][0] + perspective.m[3][1] + perspective.m[3][2] + perspective.m[3][3];
 	
 	Matrix4 temp1, temp2;
 	matrix_mul(&screen_translate, &screen_scale, &temp1);

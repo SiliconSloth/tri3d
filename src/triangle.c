@@ -261,3 +261,41 @@ void load_triangle_clipped(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box)
 		}
 	}
 }
+
+Vector3 sub_vectors(Vector3 a, Vector3 b) {
+	Vector3 out = {
+		a.x - b.x,
+		a.y - b.y,
+		a.z - b.z
+	};
+	return out;
+}
+
+Vector3 cross_product(Vector3 a, Vector3 b) {
+	Vector3 out = {
+		MUL_FX32(a.y, b.z) - MUL_FX32(a.z, b.y),
+		MUL_FX32(a.z, b.x) - MUL_FX32(a.x, b.z),
+		MUL_FX32(a.x, b.y) - MUL_FX32(a.y, b.x)
+	};
+	return out;
+}
+
+fixed32 dot_product(Vector3 a, Vector3 b) {
+	return MUL_FX32(a.x, b.x) + MUL_FX32(a.y, b.y) + MUL_FX32(a.z, b.z);
+}
+
+void load_triangle_culled(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box, fixed32 camera_z) {
+	#define CULL_DIV 128
+
+	Vector3 p1 = {v1.x / CULL_DIV, v1.y / CULL_DIV, v1.z / CULL_DIV};
+	Vector3 p2 = {v2.x / CULL_DIV, v2.y / CULL_DIV, v2.z / CULL_DIV};
+	Vector3 p3 = {v3.x / CULL_DIV, v3.y / CULL_DIV, v3.z / CULL_DIV};
+
+	Vector3 normal = cross_product(sub_vectors(p2, p1), sub_vectors(p3, p1));
+	p1.z -= camera_z / CULL_DIV;
+	fixed32 dp = dot_product(p1, normal);
+
+	if (dp >= FIXED32(0)) {
+		load_triangle_clipped(v1, v2, v3, box);
+	}
+}

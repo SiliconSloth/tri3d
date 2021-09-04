@@ -83,6 +83,12 @@ typedef struct {
 } VertexInfo;
 
 typedef struct {
+	fixed32 x;
+	fixed32 y;
+	fixed32 z;
+} Vector3;
+
+typedef struct {
 	fixed32 min_x;
 	fixed32 max_x;
 
