@@ -18,7 +18,7 @@ static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
 
 #define FOV 60
 #define NEAR 4.0
-#define FAR 20.0
+#define FAR 40.0
 
 fixed32 camera_z;
 
@@ -52,21 +52,13 @@ void draw_point(display_context_t disp, int x, int y, uint32_t color) {
 static fixed32 transformed_vertices[8][4];
 
 void load_cube(float x, float y, float z, Matrix4 *view_transform) {
-	transform_start = timer_ticks();
-	prep_start = timer_ticks();
-	
 	Matrix4 translation;
 	matrix_translate(&translation, x, y, z);
-
-	prep_time = timer_ticks() - prep_start;
-	matrix_start = timer_ticks();
 
 	Matrix4 transformation;
 	matrix_mul(view_transform, &translation, &transformation);
 
-	matrix_time = timer_ticks() - matrix_start;
-	vertex_start = timer_ticks();
-
+	profiler_start(&transform_profiler);
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 8; j++) {
 			poll_rdp();
@@ -77,13 +69,15 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 			transformed_vertices[j][i] = sum;
 		}
 	}
+	profiler_stop(&transform_profiler);
 
-	vertex_time = timer_ticks() - vertex_start;
-	transform_time = timer_ticks() - transform_start;
-	load_start = timer_ticks();
-
+	profiler_start(&triangle_profiler);
 	for (int i = 0; i < sizeof(indices) / sizeof(indices[0]); i++) {
+		profiler_start(&collate_profiler);
 		poll_rdp();
+
+		profiler_start(&null_profiler);
+		profiler_stop(&null_profiler);
 
 		int i1 = indices[i][0];
 		int i2 = indices[i][1];
@@ -107,10 +101,10 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 			tex_coords[(i % 2) * 3 + 2][0], tex_coords[(i % 2) * 3 + 2][1]
 		};
 
+		profiler_stop(&collate_profiler);
 		load_triangle_culled(v1, v2, v3, clip_box, camera_z);
 	}
-
-	load_time = timer_ticks() - load_start;
+	profiler_stop(&triangle_profiler);
 }
 
 void make_view_matrix(Matrix4 *out) {
@@ -160,6 +154,22 @@ int main(void){
 		while(!(disp = display_lock()));
 
 		t += 0.01;
+    
+		profiler_reset(&frame_profiler);
+		profiler_reset(&cpu_profiler);
+		profiler_reset(&rdp_profiler);
+		profiler_reset(&cube_profiler);
+		profiler_reset(&transform_profiler);
+		profiler_reset(&triangle_profiler);
+		profiler_reset(&collate_profiler);
+		profiler_reset(&frustum_profiler);
+		profiler_reset(&backface_profiler);
+		profiler_reset(&clip_profiler);
+		profiler_reset(&coeffs_profiler);
+		profiler_reset(&load_profiler);
+		profiler_reset(&null_profiler);
+
+		profiler_start(&frame_profiler);
 
 		Matrix4 transformation;
 		make_frame_matrix(t, &view_transform, &transformation);
@@ -167,6 +177,7 @@ int main(void){
 		run_frame_setup(__safe_buffer[disp-1], &z_buffer, &texture, &palette);
 		// run_frame_setup(&z_buffer, __safe_buffer[disp-1], &texture, &palette);
 
+		profiler_start(&cube_profiler);
 		for (int z = 0; z < 4; z++) {
 			for (int y = 0; y < 4; y++) {
 				for (int x = 0; x < 4; x++) {
@@ -174,6 +185,7 @@ int main(void){
 				}
 			}
 		}
+		profiler_stop(&cube_profiler);
 
 		flush_commands();
 		
@@ -181,17 +193,26 @@ int main(void){
 		// 	__safe_buffer[disp - 1][i] = __safe_buffer[disp - 1][i] & 0xF800;
 		// }
 
-		graphics_printf(disp, 20, 20, "%u", COUNTS_PER_SECOND / total_cpu_time);
+		profiler_stop(&frame_profiler);
+
+		graphics_printf(disp, 20, 20, "%u", COUNTS_PER_SECOND / frame_profiler.total_time);
 		
-		// graphics_printf(disp, 20, 40, "%8lu", cpu_time);
-		// graphics_printf(disp, 20, 50, "%8lu", rdp_time);
-		// graphics_printf(disp, 20, 70, "%8lu", total_cpu_time);
-		// graphics_printf(disp, 20, 80, "%8lu", total_rdp_time);
-		// graphics_printf(disp, 20, 100, "%8lu", transform_time);
-		// graphics_printf(disp, 20, 110, "%8lu", load_time);
-		// graphics_printf(disp, 20, 130, "%8lu", prep_time);
-		// graphics_printf(disp, 20, 140, "%8lu", matrix_time);
-		// graphics_printf(disp, 20, 150, "%8lu", vertex_time);
+		graphics_printf(disp, 20, 40, "%8u", cpu_profiler.total_time);
+		graphics_printf(disp, 20, 50, "%8u", rdp_profiler.total_time);
+
+		graphics_printf(disp, 20, 70, "%8u", cube_profiler.total_time);
+		
+		graphics_printf(disp, 20,  90, "%8u", transform_profiler.total_time);
+		graphics_printf(disp, 20, 100, "%8u", triangle_profiler.total_time);
+
+		graphics_printf(disp, 20, 120, "%8u", collate_profiler.total_time);
+		graphics_printf(disp, 20, 130, "%8u", frustum_profiler.total_time);
+		graphics_printf(disp, 20, 140, "%8u", backface_profiler.total_time);
+		graphics_printf(disp, 20, 150, "%8u", clip_profiler.total_time);
+		graphics_printf(disp, 20, 160, "%8u", coeffs_profiler.total_time);
+		graphics_printf(disp, 20, 170, "%8u", load_profiler.total_time);
+		
+		graphics_printf(disp, 20, 190, "%8u", null_profiler.total_time);
 		
 		display_show(disp);
 	}

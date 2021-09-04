@@ -22,42 +22,23 @@ static uint32_t buffer_starts[] = {SETUP_BUFFER_SIZE, SETUP_BUFFER_SIZE + COMMAN
 static int current_buffer = 0;
 static uint32_t command_pointer;
 
-uint64_t start_time;
-uint64_t cpu_time;
-uint64_t rdp_time;
-
-uint64_t total_cpu_time;
-uint64_t total_rdp_time;
-uint64_t num_samples;
-
-uint64_t transform_start;
-uint64_t transform_time;
-uint64_t load_start;
-uint64_t load_time;
-
-uint64_t prep_start;
-uint64_t prep_time;
-uint64_t matrix_start;
-uint64_t matrix_time;
-uint64_t vertex_start;
-uint64_t vertex_time;
-
 static bool rdp_busy = false;
 
 void set_xbus() {
 	DPC_STATUS_REG = SET_XBS;
 }
 
-void run_blocking() {
-	while ((DPC_STATUS_REG & RDP_DMA) != 0);
-	run_ucode();
-}
-
 void poll_rdp() {
 	if (rdp_busy && (DPC_STATUS_REG & RDP_DMA) == 0) {
-		rdp_time = timer_ticks() - start_time;
+		profiler_stop(&rdp_profiler);
 		rdp_busy = false;
 	}
+}
+
+void run_blocking() {
+	while ((DPC_STATUS_REG & RDP_DMA) != 0);
+	poll_rdp();
+	run_ucode();
 }
 
 void init_ucode() {
@@ -83,29 +64,28 @@ void run_frame_setup(void *color_image, void *z_image, void *texture, void *pale
 	SP_DMEM[0] = SETUP_BUFFER_OFFSET;
 	SP_DMEM[1] = (uint32_t) &tri3d_ucode_end - (uint32_t) &tri3d_ucode_data_start;
 
+	profiler_stop(&cpu_profiler);
+
 	run_blocking();
+	
+	profiler_start(&cpu_profiler);
+    profiler_start(&rdp_profiler);
+    rdp_busy = true;
 
 	current_buffer = 0;
 	command_pointer = buffer_starts[current_buffer];
-    
-    total_cpu_time = 0;
-    total_rdp_time = 0;
-    num_samples = 0;
-    start_time = timer_ticks();
-    rdp_busy = true;
 }
 
 void swap_command_buffers() {
 	SP_DMEM[0] = buffer_starts[current_buffer];
 	SP_DMEM[1] = command_pointer;
 
-	cpu_time = timer_ticks() - start_time;
+	profiler_stop(&cpu_profiler);
+
 	run_blocking();
-	poll_rdp();
-	total_cpu_time += cpu_time;
-	total_rdp_time += rdp_time;
-	num_samples++;
-	start_time = timer_ticks();
+
+	profiler_start(&cpu_profiler);
+	profiler_start(&rdp_profiler);
 	rdp_busy = true;
 
 	current_buffer = 1 - current_buffer;
