@@ -294,7 +294,33 @@ fixed32 dot_product(Vector3 a, Vector3 b) {
 	return MUL_FX32(a.x, b.x) + MUL_FX32(a.y, b.y) + MUL_FX32(a.z, b.z);
 }
 
+bool reject_point_axis(fixed32 x, fixed32 w, fixed32 cull_x, bool keep_greater) {
+	fixed32 d = x - MUL_FX32(w, cull_x);
+	if (d == 0) {
+		return false;
+	} else {
+		return (d > 0) != keep_greater;
+	}
+}
+
+bool reject_triangle_axis(fixed32 x1, fixed32 w1, fixed32 x2, fixed32 w2, fixed32 x3, fixed32 w3, fixed32 cull_x, bool keep_greater) {
+	return reject_point_axis(x1, w1, cull_x, keep_greater) && reject_point_axis(x2, w2, cull_x, keep_greater) && reject_point_axis(x3, w3, cull_x, keep_greater);
+}
+
+bool reject_triangle(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box) {
+	return reject_triangle_axis(v1.x, v1.w, v2.x, v2.w, v3.x, v3.w, box.min_x, true) ||
+		   reject_triangle_axis(v1.x, v1.w, v2.x, v2.w, v3.x, v3.w, box.max_x, false) ||
+		   reject_triangle_axis(v1.y, v1.w, v2.y, v2.w, v3.y, v3.w, box.min_y, true) ||
+		   reject_triangle_axis(v1.y, v1.w, v2.y, v2.w, v3.y, v3.w, box.max_y, false) ||
+		   reject_triangle_axis(v1.z, v1.w, v2.z, v2.w, v3.z, v3.w, box.min_z, true) ||
+		   reject_triangle_axis(v1.z, v1.w, v2.z, v2.w, v3.z, v3.w, box.max_z, false);
+}
+
 void load_triangle_culled(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box, fixed32 camera_z) {
+	if (reject_triangle(v1, v2, v3, box)) {
+		return;
+	}
+
 	#define CULL_DIV 128
 
 	Vector3 p1 = {v1.x / CULL_DIV, v1.y / CULL_DIV, v1.z / CULL_DIV};
