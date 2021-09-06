@@ -30,7 +30,6 @@ void set_xbus() {
 
 void poll_rdp() {
 	if (rdp_busy && (DPC_STATUS_REG & RDP_DMA) == 0) {
-		profiler_stop(&rdp_profiler);
 		rdp_busy = false;
 	}
 }
@@ -64,12 +63,7 @@ void run_frame_setup(void *color_image, void *z_image, void *texture, void *pale
 	SP_DMEM[0] = SETUP_BUFFER_OFFSET;
 	SP_DMEM[1] = (uint32_t) &tri3d_ucode_end - (uint32_t) &tri3d_ucode_data_start;
 
-	profiler_stop(&cpu_profiler);
-
 	run_blocking();
-	
-	profiler_start(&cpu_profiler);
-    profiler_start(&rdp_profiler);
     rdp_busy = true;
 
 	current_buffer = 0;
@@ -80,12 +74,7 @@ void swap_command_buffers() {
 	SP_DMEM[0] = buffer_starts[current_buffer];
 	SP_DMEM[1] = command_pointer;
 
-	profiler_stop(&cpu_profiler);
-
 	run_blocking();
-
-	profiler_start(&cpu_profiler);
-	profiler_start(&rdp_profiler);
 	rdp_busy = true;
 
 	current_buffer = 1 - current_buffer;

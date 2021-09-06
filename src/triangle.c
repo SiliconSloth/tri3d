@@ -143,12 +143,12 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo v1, Vertex
 
 void load_triangle_verts(VertexInfo v1, VertexInfo v2, VertexInfo v3) {
 	TriangleCoeffs coeffs;
-	profiler_start(&coeffs_profiler);
+	PROFILE_START(PS_COEFFS, 0);
 	compute_triangle_coefficients(&coeffs, v1, v2, v3);
-	profiler_stop(&coeffs_profiler);
-	profiler_start(&load_profiler);
+	PROFILE_STOP(PS_COEFFS, 0);
+	PROFILE_START(PS_LOAD, 0);
 	load_triangle(coeffs);
-	profiler_stop(&load_profiler);
+	PROFILE_STOP(PS_LOAD, 0);
 }
 
 void normalize_vertex(VertexInfo *v) {
@@ -263,7 +263,7 @@ size_t clip_triangle(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box, Verte
 }
 
 void load_triangle_clipped(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box) {
-	profiler_start(&clip_profiler);
+	PROFILE_START(PS_CLIP, 0);
 	VertexInfo clipped_verts[16];
 	size_t num_clipped = clip_triangle(v1, v2, v3, box, clipped_verts);
 	
@@ -271,7 +271,7 @@ void load_triangle_clipped(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box)
 		normalize_vertex(clipped_verts + i);
 	}
 
-	profiler_stop(&clip_profiler);
+	PROFILE_STOP(PS_CLIP, 0);
 	if (num_clipped >= 3) {
 		for (int i = 1; i < num_clipped - 1; i++) {
 			load_triangle_verts(clipped_verts[0], clipped_verts[i], clipped_verts[i + 1]);
@@ -324,13 +324,13 @@ bool reject_triangle(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box) {
 }
 
 void load_triangle_culled(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box, fixed32 camera_z) {
-	profiler_start(&frustum_profiler);
+	PROFILE_START(PS_FRUSTUM, 0);
 	if (reject_triangle(v1, v2, v3, box)) {
-		profiler_stop(&frustum_profiler);
+		PROFILE_STOP(PS_FRUSTUM, 0);
 		return;
 	}
-	profiler_stop(&frustum_profiler);
-	profiler_start(&backface_profiler);
+	PROFILE_STOP(PS_FRUSTUM, 0);
+	PROFILE_START(PS_BACKFACE, 0);
 
 	#define CULL_DIV 128
 
@@ -342,7 +342,7 @@ void load_triangle_culled(VertexInfo v1, VertexInfo v2, VertexInfo v3, Box box, 
 	p1.z -= camera_z / CULL_DIV;
 	fixed32 dp = dot_product(p1, normal);
 
-	profiler_stop(&backface_profiler);
+	PROFILE_STOP(PS_BACKFACE, 0);
 	if (dp <= FIXED32(0)) {
 		load_triangle_clipped(v1, v2, v3, box);
 	}

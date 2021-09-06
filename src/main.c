@@ -58,7 +58,7 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 	Matrix4 transformation;
 	matrix_mul(view_transform, &translation, &transformation);
 
-	profiler_start(&transform_profiler);
+	PROFILE_START(PS_TRANSFORM, 0);
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 8; j++) {
 			poll_rdp();
@@ -69,15 +69,15 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 			transformed_vertices[j][i] = sum;
 		}
 	}
-	profiler_stop(&transform_profiler);
+	PROFILE_STOP(PS_TRANSFORM, 0);
 
-	profiler_start(&triangle_profiler);
+	PROFILE_START(PS_TRIANGLE, 0);
 	for (int i = 0; i < sizeof(indices) / sizeof(indices[0]); i++) {
-		profiler_start(&collate_profiler);
+		PROFILE_START(PS_COLLATE, 0);
 		poll_rdp();
 
-		profiler_start(&null_profiler);
-		profiler_stop(&null_profiler);
+		PROFILE_START(PS_NULL, 0);
+		PROFILE_STOP(PS_NULL, 0);
 
 		int i1 = indices[i][0];
 		int i2 = indices[i][1];
@@ -101,10 +101,10 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 			tex_coords[(i % 2) * 3 + 2][0], tex_coords[(i % 2) * 3 + 2][1]
 		};
 
-		profiler_stop(&collate_profiler);
+		PROFILE_STOP(PS_COLLATE, 0);
 		load_triangle_culled(v1, v2, v3, clip_box, camera_z);
 	}
-	profiler_stop(&triangle_profiler);
+	PROFILE_STOP(PS_TRIANGLE, 0);
 }
 
 void make_view_matrix(Matrix4 *out) {
@@ -143,6 +143,8 @@ int main(void){
 	controller_init();
 	rsp_init();
 	timer_init();
+	profile_init();
+	debug_init_isviewer();
 
 	init_ucode();
 	
@@ -150,26 +152,15 @@ int main(void){
 	make_view_matrix(&view_transform);
 
 	float t = 1.102;
+	uint32_t last_time = 0;
 	while (1) {
 		while(!(disp = display_lock()));
 
 		t += 0.01;
     
-		profiler_reset(&frame_profiler);
-		profiler_reset(&cpu_profiler);
-		profiler_reset(&rdp_profiler);
-		profiler_reset(&cube_profiler);
-		profiler_reset(&transform_profiler);
-		profiler_reset(&triangle_profiler);
-		profiler_reset(&collate_profiler);
-		profiler_reset(&frustum_profiler);
-		profiler_reset(&backface_profiler);
-		profiler_reset(&clip_profiler);
-		profiler_reset(&coeffs_profiler);
-		profiler_reset(&load_profiler);
-		profiler_reset(&null_profiler);
+		profile_next_frame();
 
-		profiler_start(&frame_profiler);
+		PROFILE_START(PS_FRAME, 0);
 
 		Matrix4 transformation;
 		make_frame_matrix(t, &view_transform, &transformation);
@@ -177,7 +168,7 @@ int main(void){
 		run_frame_setup(__safe_buffer[disp-1], &z_buffer, &texture, &palette);
 		// run_frame_setup(&z_buffer, __safe_buffer[disp-1], &texture, &palette);
 
-		profiler_start(&cube_profiler);
+		PROFILE_START(PS_CUBE, 0);
 		for (int z = 0; z < 4; z++) {
 			for (int y = 0; y < 4; y++) {
 				for (int x = 0; x < 4; x++) {
@@ -185,7 +176,7 @@ int main(void){
 				}
 			}
 		}
-		profiler_stop(&cube_profiler);
+		PROFILE_STOP(PS_CUBE, 0);
 
 		flush_commands();
 		
@@ -193,27 +184,18 @@ int main(void){
 		// 	__safe_buffer[disp - 1][i] = __safe_buffer[disp - 1][i] & 0xF800;
 		// }
 
-		profiler_stop(&frame_profiler);
+		PROFILE_STOP(PS_FRAME, 0);
 
-		graphics_printf(disp, 20, 20, "%u", COUNTS_PER_SECOND / frame_profiler.total_time);
-		
-		graphics_printf(disp, 20, 40, "%8u", cpu_profiler.total_time);
-		graphics_printf(disp, 20, 50, "%8u", rdp_profiler.total_time);
+		uint32_t time = TICKS_READ();
+		graphics_printf(disp, 20, 20, "%u", TICKS_PER_SECOND / (time - last_time));
+		last_time = time;
 
-		graphics_printf(disp, 20, 70, "%8u", cube_profiler.total_time);
-		
-		graphics_printf(disp, 20,  90, "%8u", transform_profiler.total_time);
-		graphics_printf(disp, 20, 100, "%8u", triangle_profiler.total_time);
-
-		graphics_printf(disp, 20, 120, "%8u", collate_profiler.total_time);
-		graphics_printf(disp, 20, 130, "%8u", frustum_profiler.total_time);
-		graphics_printf(disp, 20, 140, "%8u", backface_profiler.total_time);
-		graphics_printf(disp, 20, 150, "%8u", clip_profiler.total_time);
-		graphics_printf(disp, 20, 160, "%8u", coeffs_profiler.total_time);
-		graphics_printf(disp, 20, 170, "%8u", load_profiler.total_time);
-		
-		graphics_printf(disp, 20, 190, "%8u", null_profiler.total_time);
-		
 		display_show(disp);
+
+		controller_scan();
+		struct controller_data keys = get_keys_down();
+		if (keys.c[0].Z) {
+			profile_dump(disp);
+		}
 	}
 }
