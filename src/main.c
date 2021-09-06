@@ -169,10 +169,10 @@ int main(void){
 		// run_frame_setup(&z_buffer, __safe_buffer[disp-1], &texture, &palette);
 
 		PROFILE_START(PS_CUBE, 0);
-		for (int z = 0; z < 4; z++) {
-			for (int y = 0; y < 4; y++) {
-				for (int x = 0; x < 4; x++) {
-					load_cube(x * 8 - 12, y * 8 - 12, z * 8 - 12, &transformation);
+		for (int z = 0; z < 6; z++) {
+			for (int y = 0; y < 6; y++) {
+				for (int x = 0; x < 6; x++) {
+					load_cube(x * 8 - 20, y * 8 - 20, z * 8 - 20, &transformation);
 				}
 			}
 		}
