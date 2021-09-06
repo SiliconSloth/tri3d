@@ -23,6 +23,7 @@ typedef enum {
 	PS_BACKFACE,
 	PS_CLIP,
 	PS_COEFFS,
+	PS_PACK,
 	PS_LOAD,
 	PS_NULL,
 

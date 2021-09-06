@@ -71,6 +71,7 @@ void profile_dump(display_context_t disp) {
 	DUMP_SLOT(PS_BACKFACE,  "   Backface");
 	DUMP_SLOT(PS_CLIP,      "   Clip");
 	DUMP_SLOT(PS_COEFFS,    "   Coeffs");
+	DUMP_SLOT(PS_PACK,      "   Pack");
 	DUMP_SLOT(PS_LOAD,      "   Load");
 	DUMP_SLOT(PS_NULL,      "   Null");
 

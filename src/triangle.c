@@ -146,9 +146,7 @@ void load_triangle_verts(VertexInfo v1, VertexInfo v2, VertexInfo v3) {
 	PROFILE_START(PS_COEFFS, 0);
 	compute_triangle_coefficients(&coeffs, v1, v2, v3);
 	PROFILE_STOP(PS_COEFFS, 0);
-	PROFILE_START(PS_LOAD, 0);
 	load_triangle(coeffs);
-	PROFILE_STOP(PS_LOAD, 0);
 }
 
 void normalize_vertex(VertexInfo *v) {

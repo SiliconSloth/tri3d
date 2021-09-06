@@ -93,83 +93,97 @@ void flush_commands() {
     }
 }
 
+#define COMMAND_SIZE 44
+
 void load_triangle(TriangleCoeffs coeffs) {
 	swap_if_full(176);
-	volatile uint32_t *command = SP_DMEM + command_pointer / sizeof(uint32_t);
 
-	command[0] = 0xF000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
-	command[1] = ((coeffs.ym & 0xFFFFC000) << 2) | ((uint32_t) coeffs.yh >> 14);
+	PROFILE_START(PS_PACK, 0);
+	uint32_t command[COMMAND_SIZE];
+	uint32_t *cp = command;
 
-	command[2] = coeffs.xl;
-	command[3] = coeffs.dxldy;
+	cp[0] = 0xF000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
+	cp[1] = ((coeffs.ym & 0xFFFFC000) << 2) | ((uint32_t) coeffs.yh >> 14);
 
-	command[4] = coeffs.xh;
-	command[5] = coeffs.dxhdy;
+	cp[2] = coeffs.xl;
+	cp[3] = coeffs.dxldy;
 
-	command[6] = coeffs.xm;
-	command[7] = coeffs.dxmdy;
+	cp[4] = coeffs.xh;
+	cp[5] = coeffs.dxhdy;
 
-	command += 8;
+	cp[6] = coeffs.xm;
+	cp[7] = coeffs.dxmdy;
 
-	command[0] = (coeffs.red & 0xFFFF0000) | ((uint32_t) coeffs.green >> 16);
-	command[1] = coeffs.blue & 0xFFFF0000;
+	cp += 8;
 
-	command[2] = (coeffs.drdx & 0xFFFF0000) | ((uint32_t) coeffs.dgdx >> 16);
-	command[3] = coeffs.dbdx & 0xFFFF0000;
+	cp[0] = (coeffs.red & 0xFFFF0000) | ((uint32_t) coeffs.green >> 16);
+	cp[1] = coeffs.blue & 0xFFFF0000;
 
-	command[4] = ((uint32_t) coeffs.red << 16) | ((uint32_t) coeffs.green & 0xFFFF);
-	command[5] = (uint32_t) coeffs.blue << 16;
+	cp[2] = (coeffs.drdx & 0xFFFF0000) | ((uint32_t) coeffs.dgdx >> 16);
+	cp[3] = coeffs.dbdx & 0xFFFF0000;
 
-	command[6] = ((uint32_t) coeffs.drdx << 16) | ((uint32_t) coeffs.dgdx & 0xFFFF);
-	command[7] = (uint32_t) coeffs.dbdx << 16;
+	cp[4] = ((uint32_t) coeffs.red << 16) | ((uint32_t) coeffs.green & 0xFFFF);
+	cp[5] = (uint32_t) coeffs.blue << 16;
 
-	command[8] = (coeffs.drde & 0xFFFF0000) | ((uint32_t) coeffs.dgde >> 16);
-	command[9] = coeffs.dbde & 0xFFFF0000;
+	cp[6] = ((uint32_t) coeffs.drdx << 16) | ((uint32_t) coeffs.dgdx & 0xFFFF);
+	cp[7] = (uint32_t) coeffs.dbdx << 16;
 
-	command[10] = (coeffs.drdy & 0xFFFF0000) | ((uint32_t) coeffs.dgdy >> 16);
-	command[11] = coeffs.dbdy & 0xFFFF0000;
+	cp[8] = (coeffs.drde & 0xFFFF0000) | ((uint32_t) coeffs.dgde >> 16);
+	cp[9] = coeffs.dbde & 0xFFFF0000;
 
-	command[12] = ((uint32_t) coeffs.drde << 16) | (coeffs.dgde & 0xFFFF);
-	command[13] = (uint32_t) coeffs.dbde << 16;
+	cp[10] = (coeffs.drdy & 0xFFFF0000) | ((uint32_t) coeffs.dgdy >> 16);
+	cp[11] = coeffs.dbdy & 0xFFFF0000;
 
-	command[14] = ((uint32_t) coeffs.drdy << 16) | (coeffs.dgdy & 0xFFFF);
-	command[15] = (uint32_t) coeffs.dbdy << 16;
+	cp[12] = ((uint32_t) coeffs.drde << 16) | (coeffs.dgde & 0xFFFF);
+	cp[13] = (uint32_t) coeffs.dbde << 16;
 
-	command += 16;
+	cp[14] = ((uint32_t) coeffs.drdy << 16) | (coeffs.dgdy & 0xFFFF);
+	cp[15] = (uint32_t) coeffs.dbdy << 16;
 
-	command[0] = (coeffs.s & 0xFFFF0000) | ((uint32_t) coeffs.t >> 16);
-	command[1] = coeffs.w & 0xFFFF0000;
+	cp += 16;
 
-	command[2] = (coeffs.dsdx & 0xFFFF0000) | ((uint32_t) coeffs.dtdx >> 16);
-	command[3] = coeffs.dwdx & 0xFFFF0000;
+	cp[0] = (coeffs.s & 0xFFFF0000) | ((uint32_t) coeffs.t >> 16);
+	cp[1] = coeffs.w & 0xFFFF0000;
 
-	command[4] = ((uint32_t) coeffs.s << 16) | ((uint32_t) coeffs.t & 0xFFFF);
-	command[5] = (uint32_t) coeffs.w << 16;
+	cp[2] = (coeffs.dsdx & 0xFFFF0000) | ((uint32_t) coeffs.dtdx >> 16);
+	cp[3] = coeffs.dwdx & 0xFFFF0000;
 
-	command[6] = ((uint32_t) coeffs.dsdx << 16) | ((uint32_t) coeffs.dtdx & 0xFFFF);
-	command[7] = (uint32_t) coeffs.dwdx << 16;
+	cp[4] = ((uint32_t) coeffs.s << 16) | ((uint32_t) coeffs.t & 0xFFFF);
+	cp[5] = (uint32_t) coeffs.w << 16;
 
-	command[8] = (coeffs.dsde & 0xFFFF0000) | ((uint32_t) coeffs.dtde >> 16);
-	command[9] = coeffs.dwde & 0xFFFF0000;
+	cp[6] = ((uint32_t) coeffs.dsdx << 16) | ((uint32_t) coeffs.dtdx & 0xFFFF);
+	cp[7] = (uint32_t) coeffs.dwdx << 16;
 
-	command[10] = (coeffs.dsdy & 0xFFFF0000) | ((uint32_t) coeffs.dtdy >> 16);
-	command[11] = coeffs.dwdy & 0xFFFF0000;
+	cp[8] = (coeffs.dsde & 0xFFFF0000) | ((uint32_t) coeffs.dtde >> 16);
+	cp[9] = coeffs.dwde & 0xFFFF0000;
 
-	command[12] = ((uint32_t) coeffs.dsde << 16) | (coeffs.dtde & 0xFFFF);
-	command[13] = (uint32_t) coeffs.dwde << 16;
+	cp[10] = (coeffs.dsdy & 0xFFFF0000) | ((uint32_t) coeffs.dtdy >> 16);
+	cp[11] = coeffs.dwdy & 0xFFFF0000;
 
-	command[14] = ((uint32_t) coeffs.dsdy << 16) | (coeffs.dtdy & 0xFFFF);
-	command[15] = (uint32_t) coeffs.dwdy << 16;
+	cp[12] = ((uint32_t) coeffs.dsde << 16) | (coeffs.dtde & 0xFFFF);
+	cp[13] = (uint32_t) coeffs.dwde << 16;
 
-	command += 16;
+	cp[14] = ((uint32_t) coeffs.dsdy << 16) | (coeffs.dtdy & 0xFFFF);
+	cp[15] = (uint32_t) coeffs.dwdy << 16;
 
-	command[0] = coeffs.z;
-	command[1] = coeffs.dzdx;
+	cp += 16;
 
-	command[2] = coeffs.dzde;
-	command[3] = coeffs.dzdy;
+	cp[0] = coeffs.z;
+	cp[1] = coeffs.dzdx;
 
-	command_pointer += 176;
+	cp[2] = coeffs.dzde;
+	cp[3] = coeffs.dzdy;
+
+	PROFILE_STOP(PS_PACK, 0);
+	
+	PROFILE_START(PS_LOAD, 0);
+	volatile uint32_t *sp_command = SP_DMEM + command_pointer / sizeof(uint32_t);
+	for (int i = 0; i < COMMAND_SIZE; i++) {
+		sp_command[i] = command[i];
+	}
+	PROFILE_STOP(PS_LOAD, 0);
+
+	command_pointer += COMMAND_SIZE * 4;
 }
 
 void load_color(uint32_t color) {
