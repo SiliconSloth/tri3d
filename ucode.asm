@@ -25,6 +25,8 @@ RDPStartPointer:
 RDPEndPointer:
   dw 0
 
+  fill 124
+
 align(8)
 RDPBuffer:
 arch n64.rdp

@@ -46,7 +46,7 @@ extern const void tri3d_ucode_start;
 extern const void tri3d_ucode_data_start;
 extern const void tri3d_ucode_end;
 
-#define SETUP_BUFFER_OFFSET 8
+#define SETUP_BUFFER_OFFSET 136
 #define SETUP_BUFFER_SIZE 368
 #define COMMAND_BUFFER_SIZE 1776
 
@@ -233,6 +233,7 @@ void load_triangle(TriangleCoeffs coeffs) {
 	PROFILE_STOP(PS_PACK, 0);
 	
 	PROFILE_START(PS_LOAD, 0);
+	dma_to_dmem(&coeffs, 8, 128);
 	dma_to_dmem(command, command_pointer, COMMAND_SIZE * sizeof(uint32_t));
 	PROFILE_STOP(PS_LOAD, 0);
 
