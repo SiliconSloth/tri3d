@@ -4,11 +4,43 @@
 #include "dispatch.h"
 #include "profile.h"
 
+static volatile struct SP_regs_s * const SP_regs = (struct SP_regs_s *)0xa4040000;
+
+#define SP_DMA_DMEM 0x04000000
+
+/** @brief SP DMA busy */
+#define SP_STATUS_DMA_BUSY              ( 1 << 2 )
+/** @brief SP IO busy */
+#define SP_STATUS_IO_BUSY               ( 1 << 4 )
+
 #define DPC_STATUS_REG (*((volatile uint32_t *)0xA410000C))
 #define SP_DMEM ((volatile uint32_t *) 0xA4000000)
 
 #define SET_XBS 2
 #define RDP_DMA 0x100
+
+/**
+ * @brief Register definition for the SP interface
+ * @ingroup lowlevel
+ */
+typedef struct SP_regs_s {
+    /** @brief RSP memory address (IMEM/DMEM) */
+    volatile void * RSP_addr;
+    /** @brief RDRAM memory address */
+    volatile void * DRAM_addr;
+    /** @brief RDRAM->RSP DMA length */
+    uint32_t rsp_read_length;
+    /** @brief RDP->RDRAM DMA length */
+    uint32_t rsp_write_length;
+    /** @brief RSP status */
+    uint32_t status;
+    /** @brief RSP DMA full */
+    uint32_t rsp_dma_full;
+    /** @brief RSP DMA busy */
+    uint32_t rsp_dma_busy;
+    /** @brief RSP Semaphore */
+    uint32_t rsp_semaphore;
+} SP_regs_t;
 
 extern const void tri3d_ucode_start;
 extern const void tri3d_ucode_data_start;
@@ -26,6 +58,30 @@ static bool rdp_busy = false;
 
 void set_xbus() {
 	DPC_STATUS_REG = SET_XBS;
+}
+
+/**
+ * @brief Wait until the SI is finished with a DMA request
+ */
+static void __SP_DMA_wait(void) {
+    while (SP_regs->status & (SP_STATUS_DMA_BUSY | SP_STATUS_IO_BUSY));
+}
+
+void dma_to_dmem(volatile void *source, uint32_t dest, unsigned long size) {
+	data_cache_hit_writeback(source, size);
+    disable_interrupts();
+    __SP_DMA_wait();
+ 
+    SP_regs->DRAM_addr = source;
+    MEMORY_BARRIER();
+    SP_regs->RSP_addr = (void *) (SP_DMA_DMEM + dest);
+    MEMORY_BARRIER();
+    SP_regs->rsp_read_length = size - 1;
+    MEMORY_BARRIER();
+
+    __SP_DMA_wait();
+    enable_interrupts();
+    return;
 }
 
 void poll_rdp() {
@@ -177,10 +233,7 @@ void load_triangle(TriangleCoeffs coeffs) {
 	PROFILE_STOP(PS_PACK, 0);
 	
 	PROFILE_START(PS_LOAD, 0);
-	volatile uint32_t *sp_command = SP_DMEM + command_pointer / sizeof(uint32_t);
-	for (int i = 0; i < COMMAND_SIZE; i++) {
-		sp_command[i] = command[i];
-	}
+	dma_to_dmem(command, command_pointer, COMMAND_SIZE * sizeof(uint32_t));
 	PROFILE_STOP(PS_LOAD, 0);
 
 	command_pointer += COMMAND_SIZE * 4;
