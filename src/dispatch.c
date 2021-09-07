@@ -187,14 +187,14 @@ void load_triangle(TriangleCoeffs coeffs) {
 	cp[8] = (coeffs.drde & 0xFFFF0000) | ((uint32_t) coeffs.dgde >> 16);
 	cp[9] = coeffs.dbde & 0xFFFF0000;
 
-	cp[10] = (coeffs.drdy & 0xFFFF0000) | ((uint32_t) coeffs.dgdy >> 16);
-	cp[11] = coeffs.dbdy & 0xFFFF0000;
+	cp[10] = 0;
+	cp[11] = 0;
 
 	cp[12] = ((uint32_t) coeffs.drde << 16) | (coeffs.dgde & 0xFFFF);
 	cp[13] = (uint32_t) coeffs.dbde << 16;
 
-	cp[14] = ((uint32_t) coeffs.drdy << 16) | (coeffs.dgdy & 0xFFFF);
-	cp[15] = (uint32_t) coeffs.dbdy << 16;
+	cp[14] = 0;
+	cp[15] = 0;
 
 	cp += 16;
 
@@ -213,14 +213,14 @@ void load_triangle(TriangleCoeffs coeffs) {
 	cp[8] = (coeffs.dsde & 0xFFFF0000) | ((uint32_t) coeffs.dtde >> 16);
 	cp[9] = coeffs.dwde & 0xFFFF0000;
 
-	cp[10] = (coeffs.dsdy & 0xFFFF0000) | ((uint32_t) coeffs.dtdy >> 16);
-	cp[11] = coeffs.dwdy & 0xFFFF0000;
+	cp[10] = 0;
+	cp[11] = 0;
 
 	cp[12] = ((uint32_t) coeffs.dsde << 16) | (coeffs.dtde & 0xFFFF);
 	cp[13] = (uint32_t) coeffs.dwde << 16;
 
-	cp[14] = ((uint32_t) coeffs.dsdy << 16) | (coeffs.dtdy & 0xFFFF);
-	cp[15] = (uint32_t) coeffs.dwdy << 16;
+	cp[14] = 0;
+	cp[15] = 0;
 
 	cp += 16;
 
@@ -228,7 +228,7 @@ void load_triangle(TriangleCoeffs coeffs) {
 	cp[1] = coeffs.dzdx;
 
 	cp[2] = coeffs.dzde;
-	cp[3] = coeffs.dzdy;
+	cp[3] = 0;
 
 	PROFILE_STOP(PS_PACK, 0);
 	

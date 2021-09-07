@@ -42,10 +42,6 @@ typedef struct {
 	fixed32 dgde;
 	fixed32 dbde;
 
-	fixed32 drdy;
-	fixed32 dgdy;
-	fixed32 dbdy;
-
 	fixed32 s;
 	fixed32 t;
 	fixed32 w;
@@ -58,14 +54,9 @@ typedef struct {
 	fixed32 dtde;
 	fixed32 dwde;
 
-	fixed32 dsdy;
-	fixed32 dtdy;
-	fixed32 dwdy;
-
 	fixed32 z;
 	fixed32 dzdx;
 	fixed32 dzde;
-	fixed32 dzdy;
 } TriangleCoeffs;
 
 typedef struct {
