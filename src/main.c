@@ -145,6 +145,7 @@ int main(void){
 	timer_init();
 	profile_init();
 	debug_init_isviewer();
+	// debug_init_usblog();
 
 	init_ucode();
 	
