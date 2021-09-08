@@ -5,6 +5,9 @@ include "lib/N64.INC"
 include "lib/N64_GFX.INC"
 include "lib/N64_RSP.INC"
 
+constant RDPStartPointer(0)
+constant RDPEndPointer(4)
+
 arch n64.rsp
 base $0000
 
@@ -17,18 +20,8 @@ RSPStart:
   break // Set SP Status Halt, Broke & Check For Interrupt
 align(8)
 
-RSPData:
-base $0000
-
-RDPStartPointer:
-  dw 0
-RDPEndPointer:
-  dw 0
-
-  fill 124
-
-align(8)
 RDPBuffer:
+base $0000
 arch n64.rdp
   Set_Scissor 0<<2,0<<2, 0,0, 320<<2,240<<2 // Set Scissor: XH 0.0,YH 0.0, Scissor Field Enable Off,Field Off, XL 320.0,YL 240.0
   Set_Other_Modes CYCLE_TYPE_FILL

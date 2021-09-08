@@ -49,11 +49,10 @@ extern const void tri3d_ucode_start;
 extern const void tri3d_ucode_data_start;
 extern const void tri3d_ucode_end;
 
-#define SETUP_BUFFER_OFFSET 136
-#define SETUP_BUFFER_SIZE 368
+#define RSP_DATA_SIZE 136
 #define COMMAND_BUFFER_SIZE 1776
 
-static uint32_t buffer_starts[] = {SETUP_BUFFER_SIZE, SETUP_BUFFER_SIZE + COMMAND_BUFFER_SIZE};
+static uint32_t buffer_starts[] = {RSP_DATA_SIZE, RSP_DATA_SIZE + COMMAND_BUFFER_SIZE};
 static int current_buffer = 0;
 static uint32_t command_pointer;
 
@@ -101,14 +100,11 @@ void run_blocking() {
 
 void init_ucode() {
     uint32_t ucode_code_size = (uint32_t) &tri3d_ucode_data_start - (uint32_t) &tri3d_ucode_start;
-    uint32_t ucode_data_size = (uint32_t) &tri3d_ucode_end - (uint32_t) &tri3d_ucode_data_start;
-
     load_ucode((void *) &tri3d_ucode_start, ucode_code_size);
-    load_data((void *) &tri3d_ucode_data_start, ucode_data_size);
 }
 
 void run_frame_setup(void *color_image, void *z_image, void *texture, void *palette) {
-	volatile uint32_t *setup_commands = (uint32_t *) &tri3d_ucode_data_start + SETUP_BUFFER_OFFSET / sizeof(uint32_t);
+	volatile uint32_t *setup_commands = (uint32_t *) &tri3d_ucode_data_start;
 
 	setup_commands[15] = (uint32_t) color_image;
 	setup_commands[5] = (uint32_t) z_image;
@@ -120,7 +116,7 @@ void run_frame_setup(void *color_image, void *z_image, void *texture, void *pale
 	data_cache_hit_writeback(&tri3d_ucode_data_start, (uint32_t) &tri3d_ucode_end - (uint32_t) &tri3d_ucode_data_start);
 
 	set_xbus(false);
-	DPC_START_REG = (((uint32_t) &tri3d_ucode_data_start) + SETUP_BUFFER_OFFSET);
+	DPC_START_REG = (uint32_t) &tri3d_ucode_data_start;
 	DPC_END_REG = (uint32_t) &tri3d_ucode_end;
 	set_xbus(true);
     rdp_busy = true;
