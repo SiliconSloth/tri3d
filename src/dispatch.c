@@ -13,9 +13,12 @@ static volatile struct SP_regs_s * const SP_regs = (struct SP_regs_s *)0xa404000
 /** @brief SP IO busy */
 #define SP_STATUS_IO_BUSY               ( 1 << 4 )
 
+#define DPC_START_REG  (*((volatile uint32_t *)0xA4100000))
+#define DPC_END_REG    (*((volatile uint32_t *)0xA4100004))
 #define DPC_STATUS_REG (*((volatile uint32_t *)0xA410000C))
 #define SP_DMEM ((volatile uint32_t *) 0xA4000000)
 
+#define CLR_XBS 1
 #define SET_XBS 2
 #define RDP_DMA 0x100
 
@@ -56,8 +59,8 @@ static uint32_t command_pointer;
 
 static bool rdp_busy = false;
 
-void set_xbus() {
-	DPC_STATUS_REG = SET_XBS;
+void set_xbus(bool enable) {
+	DPC_STATUS_REG = enable? SET_XBS : CLR_XBS;
 }
 
 /**
@@ -105,9 +108,7 @@ void init_ucode() {
 }
 
 void run_frame_setup(void *color_image, void *z_image, void *texture, void *palette) {
-	set_xbus();
-
-	volatile uint32_t *setup_commands = SP_DMEM + SETUP_BUFFER_OFFSET / sizeof(uint32_t);
+	volatile uint32_t *setup_commands = (uint32_t *) &tri3d_ucode_data_start + SETUP_BUFFER_OFFSET / sizeof(uint32_t);
 
 	setup_commands[15] = (uint32_t) color_image;
 	setup_commands[5] = (uint32_t) z_image;
@@ -116,10 +117,12 @@ void run_frame_setup(void *color_image, void *z_image, void *texture, void *pale
 	setup_commands[25] = (uint32_t) palette;
 	setup_commands[33] = (uint32_t) texture;
 
-	SP_DMEM[0] = SETUP_BUFFER_OFFSET;
-	SP_DMEM[1] = (uint32_t) &tri3d_ucode_end - (uint32_t) &tri3d_ucode_data_start;
+	data_cache_hit_writeback(&tri3d_ucode_data_start, (uint32_t) &tri3d_ucode_end - (uint32_t) &tri3d_ucode_data_start);
 
-	run_blocking();
+	set_xbus(false);
+	DPC_START_REG = (((uint32_t) &tri3d_ucode_data_start) + SETUP_BUFFER_OFFSET);
+	DPC_END_REG = (uint32_t) &tri3d_ucode_end;
+	set_xbus(true);
     rdp_busy = true;
 
 	current_buffer = 0;
