@@ -38,10 +38,21 @@ RSPStart:
   srl a1,14
   or a0,a1
 
-  lw a1,RDPStartPointer(r0)
-  sw a0,0(a1)
+  lw a2,RDPStartPointer(r0)
+  sw a0,0(a2)
 
-  mtc0 a1,c8 // Store DPC Command Start Address To DP Start Register ($A4100000)
+  lw a0,Coeffs+TC_ym(r0)
+  la a1,$FFFFC000
+  and a0,a1
+  sll a0,2
+
+  lw a1,Coeffs+TC_yh(r0)
+  srl a1,14
+  or a0,a1
+
+  sw a0,4(a2)
+
+  mtc0 a2,c8 // Store DPC Command Start Address To DP Start Register ($A4100000)
   
   lw a0,RDPEndPointer(r0)
   mtc0 a0,c9 // Store DPC Command End Address To DP End Register ($A4100004)

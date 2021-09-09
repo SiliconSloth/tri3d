@@ -158,7 +158,7 @@ void load_triangle(TriangleCoeffs coeffs) {
 	uint32_t *cp = command;
 
 	// cp[0] = 0xF000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
-	cp[1] = ((coeffs.ym & 0xFFFFC000) << 2) | ((uint32_t) coeffs.yh >> 14);
+	// cp[1] = ((coeffs.ym & 0xFFFFC000) << 2) | ((uint32_t) coeffs.yh >> 14);
 
 	cp[2] = coeffs.xl;
 	cp[3] = coeffs.dxldy;
@@ -237,6 +237,6 @@ void load_triangle(TriangleCoeffs coeffs) {
 
 	command_pointer += COMMAND_SIZE * 4;
 	swap_command_buffers();
-	fprintf(stderr, "%lX    %lX\n", *(SP_DMEM + command_pointer / 4), command[0]);
+	fprintf(stderr, "%lX    %lX\n", *(SP_DMEM + 1 + command_pointer / 4), command[1]);
 	PROFILE_STOP(PS_LOAD, 0);
 }
