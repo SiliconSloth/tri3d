@@ -151,13 +151,13 @@ void flush_commands() {
 #define COMMAND_SIZE 44
 
 void load_triangle(TriangleCoeffs coeffs) {
-	swap_if_full(176);
+	// swap_if_full(176);
 
 	PROFILE_START(PS_PACK, 0);
 	uint32_t command[COMMAND_SIZE];
 	uint32_t *cp = command;
 
-	cp[0] = 0xF000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
+	// cp[0] = 0xF000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
 	cp[1] = ((coeffs.ym & 0xFFFFC000) << 2) | ((uint32_t) coeffs.yh >> 14);
 
 	cp[2] = coeffs.xl;
@@ -234,27 +234,9 @@ void load_triangle(TriangleCoeffs coeffs) {
 	PROFILE_START(PS_LOAD, 0);
 	dma_to_dmem(&coeffs, 8, 128);
 	dma_to_dmem(command, command_pointer, COMMAND_SIZE * sizeof(uint32_t));
-	PROFILE_STOP(PS_LOAD, 0);
 
 	command_pointer += COMMAND_SIZE * 4;
-}
-
-void load_color(uint32_t color) {
-	swap_if_full(8);
-	volatile uint32_t *command = SP_DMEM + command_pointer / sizeof(uint32_t);
-
-	command[0] = 0x39000000;
-	command[1] = color;
-
-	command_pointer += 8;
-}
-
-void load_sync() {
-	swap_if_full(8);
-	volatile uint32_t *command = SP_DMEM + command_pointer / sizeof(uint32_t);
-
-	command[0] = 0x27000000;
-	command[1] = 0;
-
-	command_pointer += 8;
+	swap_command_buffers();
+	fprintf(stderr, "%lX    %lX\n", *(SP_DMEM + command_pointer / 4), command[0]);
+	PROFILE_STOP(PS_LOAD, 0);
 }

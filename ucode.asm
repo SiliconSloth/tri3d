@@ -5,15 +5,43 @@ include "lib/N64.INC"
 include "lib/N64_GFX.INC"
 include "lib/N64_RSP.INC"
 
+constant TC_major(0)
+
+constant TC_yl(4)
+constant TC_ym(8)
+constant TC_yh(12)
+
+constant TC_xl(16)
+constant TC_dxldy(20)
+
+constant TC_xh(24)
+constant TC_dxhdy(28)
+
+constant TC_xm(32)
+constant TC_dxmdy(36)
+
 constant RDPStartPointer(0)
 constant RDPEndPointer(4)
+constant Coeffs(8)
 
 arch n64.rsp
 base $0000
 
 RSPStart:
-  lw a0,RDPStartPointer(r0)
-  mtc0 a0,c8 // Store DPC Command Start Address To DP Start Register ($A4100000)
+  la a0,$0F000000
+
+  lb a1,Coeffs+TC_major(r0)
+  sll a1,23
+  or a0,a1
+
+  lw a1,Coeffs+TC_yl(r0)
+  srl a1,14
+  or a0,a1
+
+  lw a1,RDPStartPointer(r0)
+  sw a0,0(a1)
+
+  mtc0 a1,c8 // Store DPC Command Start Address To DP Start Register ($A4100000)
   
   lw a0,RDPEndPointer(r0)
   mtc0 a0,c9 // Store DPC Command End Address To DP End Register ($A4100004)

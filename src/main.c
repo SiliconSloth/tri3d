@@ -179,7 +179,7 @@ int main(void){
 		}
 		PROFILE_STOP(PS_CUBE, 0);
 
-		flush_commands();
+		// flush_commands();
 		
 		// for (size_t i = 0; i < 320 * 240; i++) {
 		// 	__safe_buffer[disp - 1][i] = __safe_buffer[disp - 1][i] & 0xF800;
