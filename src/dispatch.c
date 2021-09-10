@@ -49,7 +49,9 @@ extern const void tri3d_ucode_start;
 extern const void tri3d_ucode_data_start;
 extern const void tri3d_ucode_end;
 
-#define RSP_DATA_SIZE 136
+#define COEFFS_LOC 8
+#define VERTICES_LOC 136
+#define RSP_DATA_SIZE (VERTICES_LOC + 24)
 #define COMMAND_BUFFER_SIZE 1776
 
 static uint32_t buffer_starts[] = {RSP_DATA_SIZE, RSP_DATA_SIZE + COMMAND_BUFFER_SIZE};
@@ -150,7 +152,7 @@ void flush_commands() {
 
 #define COMMAND_SIZE 44
 
-void load_triangle(TriangleCoeffs coeffs) {
+void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexInfo v3) {
 	// swap_if_full(176);
 
 	PROFILE_START(PS_PACK, 0);
@@ -229,10 +231,17 @@ void load_triangle(TriangleCoeffs coeffs) {
 	cp[2] = coeffs.dzde;
 	cp[3] = 0;
 
+	fixed32 vertices[6] = {
+		v1.x, v1.y,
+		v2.x, v2.y,
+		v3.x, v3.y
+	};
+
 	PROFILE_STOP(PS_PACK, 0);
 	
 	PROFILE_START(PS_LOAD, 0);
-	dma_to_dmem(&coeffs, 8, 128);
+	dma_to_dmem(&coeffs, COEFFS_LOC, 128);
+	dma_to_dmem(vertices, VERTICES_LOC, sizeof(vertices));
 	dma_to_dmem(command, command_pointer, COMMAND_SIZE * sizeof(uint32_t));
 
 	command_pointer += COMMAND_SIZE * 4;
