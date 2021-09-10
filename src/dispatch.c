@@ -246,6 +246,6 @@ void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexIn
 
 	command_pointer += COMMAND_SIZE * 4;
 	swap_command_buffers();
-	fprintf(stderr, "%lX    %lX\n", *(SP_DMEM + 1 + command_pointer / 4), command[1]);
+	fprintf(stderr, "%8lX %8lX %8lX %8lX\n", *(SP_DMEM + 4), *(SP_DMEM + 5), *(SP_DMEM + 6), *(SP_DMEM + 7));
 	PROFILE_STOP(PS_LOAD, 0);
 }

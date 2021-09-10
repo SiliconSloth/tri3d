@@ -70,6 +70,15 @@ RSPStart:
   lw a0,Coeffs+TC_dxmdy(r0)
   sw a0,28(a2)
 
+  la a0,$CAFEABBA
+  sw a0,32(r0)
+  llv v0[e0],32(r0)
+  llv v0[e4],32(r0)
+  llv v0[e8],32(r0)
+  llv v0[e12],32(r0)
+
+  sqv v0[e0],16(r0)
+
   mtc0 a2,c8 // Store DPC Command Start Address To DP Start Register ($A4100000)
   
   lw a0,RDPEndPointer(r0)
