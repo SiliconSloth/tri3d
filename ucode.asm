@@ -24,6 +24,10 @@ constant RDPStartPointer(0)
 constant RDPEndPointer(4)
 constant Coeffs(8)
 
+constant Vertex1(136)
+constant Vertex2(144)
+constant Vertex3(152)
+
 arch n64.rsp
 base $0000
 
@@ -70,14 +74,63 @@ RSPStart:
   lw a0,Coeffs+TC_dxmdy(r0)
   sw a0,28(a2)
 
-  la a0,$CAFEABBA
-  sw a0,32(r0)
-  llv v0[e0],32(r0)
-  llv v0[e4],32(r0)
-  llv v0[e8],32(r0)
-  llv v0[e12],32(r0)
+  la a3,Vertex1
 
-  sqv v0[e0],16(r0)
+  lsv v0[e0],0(a3)
+  lsv v1[e0],2(a3)
+  lsv v2[e0],4(a3)
+  lsv v3[e0],6(a3)
+  lsv v4[e0],8(a3)
+  lsv v5[e0],10(a3)
+  lsv v6[e0],12(a3)
+  lsv v7[e0],14(a3)
+
+  vsubc v9,v5,v1
+  vsub v8,v4,v0
+
+  vsubc v11,v7,v3
+  vsub v10,v6,v2
+
+  vrcph v12[e0],v10[e0]
+  vrcpl v13[e0],v11[e0]
+  vrcph v12[e0],v10[e1]
+  vrcpl v13[e1],v11[e1]
+  vrcph v12[e1],v10[e2]
+  vrcpl v13[e2],v11[e2]
+  vrcph v12[e2],v10[e3]
+  vrcpl v13[e3],v11[e3]
+  vrcph v12[e3],v10[e4]
+  vrcpl v13[e4],v11[e4]
+  vrcph v12[e4],v10[e5]
+  vrcpl v13[e5],v11[e5]
+  vrcph v12[e5],v10[e6]
+  vrcpl v13[e6],v11[e6]
+  vrcph v12[e6],v10[e7]
+  vrcpl v13[e7],v11[e7]
+  vrcph v12[e7],v10[e0]
+
+  la a0,1
+  mtc2 a0,v31[e0]
+  la a0,2
+  mtc2 a0,v31[e2]
+
+  vmudn v13,v13,v31[e9]
+  vmadm v12,v12,v31[e9]
+  vmadn v13,v30,v30
+
+  vmudl v15,v9,v13
+  vmadm v14,v8,v13
+  vmadn v15,v9,v12
+  vmadh v14,v8,v12
+
+  vge v16,v30,v10
+  vmrg v14,v30,v14
+  vmrg v15,v30,v15
+
+  sqv v14[e0],16(r0)
+
+  ssv v14[e0],28(a2)
+  ssv v15[e0],30(a2)
 
   mtc0 a2,c8 // Store DPC Command Start Address To DP Start Register ($A4100000)
   
