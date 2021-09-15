@@ -13,5 +13,3 @@ tri3d can be built using the [libdragon](https://github.com/DragonMinded/libdrag
 The contents of the `lib` folder are copied from PeterLemon's [N64 assembly demos](https://github.com/PeterLemon/N64). `ucode.asm` is also based on code from that repository.
 
 The profiling code in `profile.c` and `profile.h` was provided by [rasky](https://github.com/rasky).
-
-The `graphics_printf` function is copied from sp1187's [n64triangle](https://github.com/sp1187/n64triangle).

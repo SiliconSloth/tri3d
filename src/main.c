@@ -28,17 +28,6 @@ static Box clip_box = {
 	FIXED32(0), FIXED32(1)
 };
 
-void graphics_printf(display_context_t disp, int x, int y, char *szFormat, ...){
-	char szBuffer[64];
-
-	va_list pArgs;
-	va_start(pArgs, szFormat);
-	vsnprintf(szBuffer, sizeof szBuffer, szFormat, pArgs);
-	va_end(pArgs);
-
-	graphics_draw_text(disp, x, y, szBuffer);
-}
-
 void draw_point(display_context_t disp, int x, int y, uint32_t color) {
 	if (x >= 1 && x < 319 && y >= 1 && y < 239) {
 		graphics_draw_pixel(disp, x,   y,   color);
@@ -188,7 +177,9 @@ int main(void){
 		PROFILE_STOP(PS_FRAME, 0);
 
 		uint32_t time = TICKS_READ();
-		graphics_printf(disp, 20, 20, "%u", TICKS_PER_SECOND / (time - last_time));
+		char text_buffer[64];
+		sprintf(text_buffer, "%lu", TICKS_PER_SECOND / (time - last_time));
+		graphics_draw_text(disp, 20, 20, text_buffer);
 		last_time = time;
 
 		display_show(disp);
