@@ -75,61 +75,87 @@ RSPStart:
 
   la a3, Vertex1
 
-  lsv v0[0], 0(a3)
-  lsv v1[0], 2(a3)
-  lsv v2[0], 4(a3)
-  lsv v3[0], 6(a3)
-  lsv v4[0], 8(a3)
-  lsv v5[0], 10(a3)
-  lsv v6[0], 12(a3)
-  lsv v7[0], 14(a3)
+zeros equ v30
+consts equ v31
 
-  vsubc v9, v5, v1
-  vsub v8, v4, v0
-
-  vsubc v11, v7, v3
-  vsub v10, v6, v2
-
-  vrcph v12[0], v10[0]
-  vrcpl v13[0], v11[0]
-  vrcph v12[0], v10[1]
-  vrcpl v13[1], v11[1]
-  vrcph v12[1], v10[2]
-  vrcpl v13[2], v11[2]
-  vrcph v12[2], v10[3]
-  vrcpl v13[3], v11[3]
-  vrcph v12[3], v10[4]
-  vrcpl v13[4], v11[4]
-  vrcph v12[4], v10[5]
-  vrcpl v13[5], v11[5]
-  vrcph v12[5], v10[6]
-  vrcpl v13[6], v11[6]
-  vrcph v12[6], v10[7]
-  vrcpl v13[7], v11[7]
-  vrcph v12[7], v10[0]
-
+  la a0, 0
+  mtc2 a0, consts[0]
   la a0, 1
-  mtc2 a0, v31[0]
+  mtc2 a0, consts[2]
   la a0, 2
-  mtc2 a0, v31[2]
+  mtc2 a0, consts[4]
 
-  vmudn v13, v13, v31[1]
-  vmadm v12, v12, v31[1]
-  vmadn v13, v30, v30
+x1I equ v0
+x1F equ v1
+y1I equ v2
+y1F equ v3
+x2I equ v4
+x2F equ v5
+y2I equ v6
+y2F equ v7
 
-  vmudl v15, v9, v13
-  vmadm v14, v8, v13
-  vmadn v15, v9, v12
-  vmadh v14, v8, v12
+  lsv x1I[0], 0(a3)
+  lsv x1F[0], 2(a3)
+  lsv y1I[0], 4(a3)
+  lsv y1F[0], 6(a3)
+  lsv x2I[0], 8(a3)
+  lsv x2F[0], 10(a3)
+  lsv y2I[0], 12(a3)
+  lsv y2F[0], 14(a3)
+  
+dxI equ v8
+dxF equ v9
+
+  vsubc dxF, x2F, x1F
+  vsub dxI, x2I, x1I
+  
+dyI equ v10
+dyF equ v11
+
+  vsubc dyF, y2F, y1F
+  vsub dyI, y2I, y1I
+  
+rdyI equ v12
+rdyF equ v13
+
+  vrcph rdyI[0], dyI[0]
+  vrcpl rdyF[0], dyF[0]
+  vrcph rdyI[0], dyI[1]
+  vrcpl rdyF[1], dyF[1]
+  vrcph rdyI[1], dyI[2]
+  vrcpl rdyF[2], dyF[2]
+  vrcph rdyI[2], dyI[3]
+  vrcpl rdyF[3], dyF[3]
+  vrcph rdyI[3], dyI[4]
+  vrcpl rdyF[4], dyF[4]
+  vrcph rdyI[4], dyI[5]
+  vrcpl rdyF[5], dyF[5]
+  vrcph rdyI[5], dyI[6]
+  vrcpl rdyF[6], dyF[6]
+  vrcph rdyI[6], dyI[7]
+  vrcpl rdyF[7], dyF[7]
+  vrcph rdyI[7], dyI[0]
+
+  vmudn rdyF, rdyF, consts[2]
+  vmadm rdyI, rdyI, consts[2]
+  vmadn rdyF, rdyF, consts[0]
+  
+dxmdyI equ v14
+dxmdyF equ v15
+
+  vmudl dxmdyF, dxF, rdyF
+  vmadm dxmdyI, dxI, rdyF
+  vmadn dxmdyF, dxF, rdyI
+  vmadh dxmdyI, dxI, rdyI
 
   vge v16, v30, v10
-  vmrg v14, v30, v14
-  vmrg v15, v30, v15
+  vmrg dxmdyI, zeros, dxmdyI
+  vmrg dxmdyF, zeros, dxmdyF
 
-  sqv v14[0], 16(r0)
+  sqv dxmdyI[0], 16(r0)
 
-  ssv v14[0], 28(a2)
-  ssv v15[0], 30(a2)
+  ssv dxmdyI[0], 28(a2)
+  ssv dxmdyF[0], 30(a2)
 
   mtc0 a2, c8 // Store DPC Command Start Address To DP Start Register ($A4100000)
   
