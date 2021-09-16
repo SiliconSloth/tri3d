@@ -30,6 +30,46 @@ Vertex2 equ 144
 Vertex3 equ 152
 
 
+.macro ComputeGradient, x1I, x1F, y1I, y1F, x2I, x2F, y2I, y2F, dxdyI, dxdyF, dxI, dxF, dyI, dyF, rdyI, rdyF
+  vsubc dxF, x2F, x1F
+  vsub dxI, x2I, x1I
+
+  vsubc dyF, y2F, y1F
+  vsub dyI, y2I, y1I
+
+  vrcph rdyI[0], dyI[0]
+  vrcpl rdyF[0], dyF[0]
+  vrcph rdyI[0], dyI[1]
+  vrcpl rdyF[1], dyF[1]
+  vrcph rdyI[1], dyI[2]
+  vrcpl rdyF[2], dyF[2]
+  vrcph rdyI[2], dyI[3]
+  vrcpl rdyF[3], dyF[3]
+  vrcph rdyI[3], dyI[4]
+  vrcpl rdyF[4], dyF[4]
+  vrcph rdyI[4], dyI[5]
+  vrcpl rdyF[5], dyF[5]
+  vrcph rdyI[5], dyI[6]
+  vrcpl rdyF[6], dyF[6]
+  vrcph rdyI[6], dyI[7]
+  vrcpl rdyF[7], dyF[7]
+  vrcph rdyI[7], dyI[0]
+
+  vmudn rdyF, rdyF, consts[2]
+  vmadm rdyI, rdyI, consts[2]
+  vmadn rdyF, rdyF, consts[0]
+
+  vmudl dxdyF, dxF, rdyF
+  vmadm dxdyI, dxI, rdyF
+  vmadn dxdyF, dxF, rdyI
+  vmadh dxdyI, dxI, rdyI
+
+  vge v16, zeros, dyI
+  vmrg dxdyI, zeros, dxdyI
+  vmrg dxdyF, zeros, dxdyF
+.endmacro
+
+
 RSPStart:
   la a0, 0x0F000000
 
@@ -93,6 +133,9 @@ x2I equ v4
 x2F equ v5
 y2I equ v6
 y2F equ v7
+  
+dxmdyI equ v8
+dxmdyF equ v9
 
   lsv x1I[0], 0(a3)
   lsv x1F[0], 2(a3)
@@ -102,55 +145,8 @@ y2F equ v7
   lsv x2F[0], 10(a3)
   lsv y2I[0], 12(a3)
   lsv y2F[0], 14(a3)
-  
-dxI equ v8
-dxF equ v9
 
-  vsubc dxF, x2F, x1F
-  vsub dxI, x2I, x1I
-  
-dyI equ v10
-dyF equ v11
-
-  vsubc dyF, y2F, y1F
-  vsub dyI, y2I, y1I
-  
-rdyI equ v12
-rdyF equ v13
-
-  vrcph rdyI[0], dyI[0]
-  vrcpl rdyF[0], dyF[0]
-  vrcph rdyI[0], dyI[1]
-  vrcpl rdyF[1], dyF[1]
-  vrcph rdyI[1], dyI[2]
-  vrcpl rdyF[2], dyF[2]
-  vrcph rdyI[2], dyI[3]
-  vrcpl rdyF[3], dyF[3]
-  vrcph rdyI[3], dyI[4]
-  vrcpl rdyF[4], dyF[4]
-  vrcph rdyI[4], dyI[5]
-  vrcpl rdyF[5], dyF[5]
-  vrcph rdyI[5], dyI[6]
-  vrcpl rdyF[6], dyF[6]
-  vrcph rdyI[6], dyI[7]
-  vrcpl rdyF[7], dyF[7]
-  vrcph rdyI[7], dyI[0]
-
-  vmudn rdyF, rdyF, consts[2]
-  vmadm rdyI, rdyI, consts[2]
-  vmadn rdyF, rdyF, consts[0]
-  
-dxmdyI equ v14
-dxmdyF equ v15
-
-  vmudl dxmdyF, dxF, rdyF
-  vmadm dxmdyI, dxI, rdyF
-  vmadn dxmdyF, dxF, rdyI
-  vmadh dxmdyI, dxI, rdyI
-
-  vge v16, v30, v10
-  vmrg dxmdyI, zeros, dxmdyI
-  vmrg dxmdyF, zeros, dxmdyF
+  ComputeGradient x1I, x1F, y1I, y1F, x2I, x2F, y2I, y2F, dxmdyI, dxmdyF, v10, v11, v12, v13, v14, v15
 
   sqv dxmdyI[0], 16(r0)
 
