@@ -64,7 +64,7 @@ Vertex3 equ 152
   vmadn dxdyF, dxF, rdyI
   vmadh dxdyI, dxI, rdyI
 
-  vge v16, zeros, dyI
+  vge dyI, zeros, dyI
   vmrg dxdyI, zeros, dxdyI
   vmrg dxdyF, zeros, dxdyF
 .endmacro
@@ -98,20 +98,20 @@ RSPStart:
   lw a0, Coeffs+TC_xl(r0)
   sw a0, 8(a2)
 
-  lw a0, Coeffs+TC_dxldy(r0)
-  sw a0, 12(a2)
+  // lw a0, Coeffs+TC_dxldy(r0)
+  // sw a0, 12(a2)
 
   lw a0, Coeffs+TC_xh(r0)
   sw a0, 16(a2)
 
-  lw a0, Coeffs+TC_dxhdy(r0)
-  sw a0, 20(a2)
+  // lw a0, Coeffs+TC_dxhdy(r0)
+  // sw a0, 20(a2)
 
   lw a0, Coeffs+TC_xm(r0)
   sw a0, 24(a2)
 
-  lw a0, Coeffs+TC_dxmdy(r0)
-  sw a0, 28(a2)
+  // lw a0, Coeffs+TC_dxmdy(r0)
+  // sw a0, 28(a2)
 
   la a3, Vertex1
 
@@ -129,27 +129,49 @@ x1I equ v0
 x1F equ v1
 y1I equ v2
 y1F equ v3
+
 x2I equ v4
 x2F equ v5
 y2I equ v6
 y2F equ v7
-  
-dxmdyI equ v8
-dxmdyF equ v9
+
+x3I equ v8
+x3F equ v9
+y3I equ v10
+y3F equ v11
 
   lsv x1I[0], 0(a3)
   lsv x1F[0], 2(a3)
   lsv y1I[0], 4(a3)
   lsv y1F[0], 6(a3)
+
   lsv x2I[0], 8(a3)
   lsv x2F[0], 10(a3)
   lsv y2I[0], 12(a3)
   lsv y2F[0], 14(a3)
+  
+  lsv x3I[0], 16(a3)
+  lsv x3F[0], 18(a3)
+  lsv y3I[0], 20(a3)
+  lsv y3F[0], 22(a3)
 
-  ComputeGradient x1I, x1F, y1I, y1F, x2I, x2F, y2I, y2F, dxmdyI, dxmdyF, v10, v11, v12, v13, v14, v15
+dxldyI equ v12
+dxldyF equ v13
+dxmdyI equ v14
+dxmdyF equ v15
+dxhdyI equ v16
+dxhdyF equ v17
 
-  sqv dxmdyI[0], 16(r0)
+  ComputeGradient x2I, x2F, y2I, y2F, x3I, x3F, y3I, y3F, dxldyI, dxldyF, v18, v19, v20, v21, v22, v23
+  ComputeGradient x1I, x1F, y1I, y1F, x2I, x2F, y2I, y2F, dxmdyI, dxmdyF, v18, v19, v20, v21, v22, v23
+  ComputeGradient x1I, x1F, y1I, y1F, x3I, x3F, y3I, y3F, dxhdyI, dxhdyF, v18, v19, v20, v21, v22, v23
 
+  //sqv x1I, 16(r0)
+
+  ssv dxldyI[0], 12(a2)
+  ssv dxldyF[0], 14(a2)
+  ssv dxhdyI[0], 20(a2)
+  ssv dxhdyF[0], 22(a2)
   ssv dxmdyI[0], 28(a2)
   ssv dxmdyF[0], 30(a2)
 
