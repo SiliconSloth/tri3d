@@ -240,12 +240,12 @@ void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexIn
 	PROFILE_STOP(PS_PACK, 0);
 	
 	PROFILE_START(PS_LOAD, 0);
+	// fprintf(stderr, "%8lX %8lX %8lX %8lX\n", *(SP_DMEM + 4), *(SP_DMEM + 5), *(SP_DMEM + 6), *(SP_DMEM + 7));
 	dma_to_dmem(&coeffs, COEFFS_LOC, 128);
 	dma_to_dmem(vertices, VERTICES_LOC, sizeof(vertices));
 	dma_to_dmem(command, command_pointer, COMMAND_SIZE * sizeof(uint32_t));
 
 	command_pointer += COMMAND_SIZE * 4;
 	swap_command_buffers();
-	fprintf(stderr, "%8lX %8lX %8lX %8lX\n", *(SP_DMEM + 4), *(SP_DMEM + 5), *(SP_DMEM + 6), *(SP_DMEM + 7));
 	PROFILE_STOP(PS_LOAD, 0);
 }
