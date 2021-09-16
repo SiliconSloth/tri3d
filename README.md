@@ -12,6 +12,6 @@ tri3d can be built using the [libdragon](https://github.com/DragonMinded/libdrag
 
 The file `lib/N64_RDP.asm` was generated from the file `n64-rdp.arch` included in [bass](https://github.com/ARM9/bass).
 
-The other three files in the `lib` directory were generated from the files in the `LIB` directory of PeterLemon's [N64 assembly demos](https://github.com/PeterLemon/N64).
+The other two files in the `lib` directory were generated from the files in the `LIB` directory of PeterLemon's [N64 assembly demos](https://github.com/PeterLemon/N64).
 
 The profiling code in `profile.c` and `profile.h` was provided by [rasky](https://github.com/rasky).

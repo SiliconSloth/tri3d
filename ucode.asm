@@ -1,7 +1,6 @@
 .rsp
 .create outfile, 0
 
-.include "lib/N64.asm"
 .include "lib/N64_GFX.asm"
 .include "lib/N64_RSP.asm"
 .include "lib/N64_RDP.asm"
@@ -175,10 +174,10 @@ dxhdyF equ v17
   ssv dxmdyI[0], 28(a2)
   ssv dxmdyF[0], 30(a2)
 
-  mtc0 a2, c8 // Store DPC Command Start Address To DP Start Register ($A4100000)
+  mtc0 a2, dpc_start
   
   lw a0, RDPEndPointer(r0)
-  mtc0 a0, c9 // Store DPC Command End Address To DP End Register ($A4100004)
+  mtc0 a0, dpc_end
   break // Set SP Status Halt, Broke & Check For Interrupt
 .align 8
 
