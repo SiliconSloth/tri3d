@@ -2,9 +2,6 @@
 //==============================
 // N64 Reality Signal Processor
 //==============================
-// RSP MIPS 4000 CPU Registers R0..R31
-// RSP CP2 128-Bit Vector Registers: V0..V31
-// RSP CP2 Vector Elements (128-Bit Vector = 16 Elements): E0..E15
 
 // RSP CP0 Control Registers (MTF0/MTC0):
 c0 equ $0   // RSP CP0 Control Register 00: I/DMEM Address For DMA (RW) ($04040000)
