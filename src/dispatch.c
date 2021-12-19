@@ -8,15 +8,9 @@ static volatile struct SP_regs_s * const SP_regs = (struct SP_regs_s *)0xa404000
 
 #define SP_DMA_DMEM 0x04000000
 
-/** @brief SP DMA busy */
-#define SP_STATUS_DMA_BUSY              ( 1 << 2 )
-/** @brief SP IO busy */
-#define SP_STATUS_IO_BUSY               ( 1 << 4 )
-
 #define DPC_START_REG  (*((volatile uint32_t *)0xA4100000))
 #define DPC_END_REG    (*((volatile uint32_t *)0xA4100004))
 #define DPC_STATUS_REG (*((volatile uint32_t *)0xA410000C))
-#define SP_DMEM ((volatile uint32_t *) 0xA4000000)
 
 #define CLR_XBS 1
 #define SET_XBS 2
@@ -97,12 +91,12 @@ void poll_rdp() {
 void run_blocking() {
 	while ((DPC_STATUS_REG & RDP_DMA) != 0);
 	poll_rdp();
-	run_ucode();
+	rsp_run_async();
 }
 
 void init_ucode() {
     uint32_t ucode_code_size = (uint32_t) &tri3d_ucode_data_start - (uint32_t) &tri3d_ucode_start;
-    load_ucode((void *) &tri3d_ucode_start, ucode_code_size);
+    rsp_load_code((void *) &tri3d_ucode_start, ucode_code_size, 0);
 }
 
 void run_frame_setup(void *color_image, void *z_image, void *texture, void *palette) {
