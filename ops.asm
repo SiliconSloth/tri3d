@@ -1,20 +1,21 @@
-.macro Mul_ici, ci, op, out
-  vmudh out, op, consts[ci]
+.macro Mul_ifci_i, ci, op_i, op_f, res, tmp
+  vmudn tmp, op_f, consts[ci]
+  vmadh res, op_i, consts[ci]
 .endmacro
 
 
-.macro Load, addr, part, ind, out
-  lsv out[0],  addr + part * 2 + V_size * (ind - 3)(a0)
-  lsv out[2],  addr + part * 2 + V_size * ind(a0)
+.macro Load, addr, part, ind, res
+  lsv res[0],  addr + part * 2 + V_size * (ind - 3)(a0)
+  lsv res[2],  addr + part * 2 + V_size * ind(a0)
 
-  lsv out[4],  addr + part * 2 + V_size * (ind - 3)(a1)
-  lsv out[6],  addr + part * 2 + V_size * ind(a1)
+  lsv res[4],  addr + part * 2 + V_size * (ind - 3)(a1)
+  lsv res[6],  addr + part * 2 + V_size * ind(a1)
 
-  lsv out[8],  addr + part * 2 + V_size * (ind - 3)(a2)
-  lsv out[10], addr + part * 2 + V_size * ind(a2)
+  lsv res[8],  addr + part * 2 + V_size * (ind - 3)(a2)
+  lsv res[10], addr + part * 2 + V_size * ind(a2)
 
-  lsv out[12], addr + part * 2 + V_size * (ind - 3)(a3)
-  lsv out[14], addr + part * 2 + V_size * ind(a3)
+  lsv res[12], addr + part * 2 + V_size * (ind - 3)(a3)
+  lsv res[14], addr + part * 2 + V_size * ind(a3)
 .endmacro
 
 

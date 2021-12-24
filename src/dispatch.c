@@ -243,7 +243,7 @@ void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexIn
 void flush_triangles() {
 	PROFILE_START(PS_LOAD, 0);
 	int ind = 2;
-	fprintf(stderr, "%8lX %8lX %8lX %8lX %8lX %8lX %8lX %8lX\n", vertex_buffer[ind].t, vertex_buffer[ind + 3].t, vertex_buffer[ind + 6].t, vertex_buffer[ind + 9].t, vertex_buffer[ind + 12].t, vertex_buffer[ind + 15].t, vertex_buffer[ind + 18].t, vertex_buffer[ind + 21].t);
+	fprintf(stderr, "%8lX %8lX %8lX %8lX %8lX %8lX %8lX %8lX\n", vertex_buffer[ind].y, vertex_buffer[ind + 3].y, vertex_buffer[ind + 6].y, vertex_buffer[ind + 9].y, vertex_buffer[ind + 12].y, vertex_buffer[ind + 15].y, vertex_buffer[ind + 18].y, vertex_buffer[ind + 21].y);
 	// dma_to_dmem(&coeffs, COEFFS_LOC, 128);
 	dma_to_dmem(vertex_buffer, VERTICES_LOC, sizeof(vertex_buffer));
 	dma_to_dmem(command_buffer, command_pointer, sizeof(command_buffer));

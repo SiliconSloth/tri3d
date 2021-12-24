@@ -32,12 +32,13 @@ RSPStart:
   addi t2, t0, C_size * 4
   addi t3, t0, C_size * 6
 
-  Load V_t, 0, 2, v0
-  Store C_b_i, v1
+  Load V_y, 0, 2, v0
+  Load V_y, 1, 2, v1
+  Store C_b_i, v2
 
-  Mul_ici const_4, v0, v2
+  Mul_ifci_i const_4, v0, v1, v3, v4
 
-  sqv v2[0],  16(r0)
+  sqv v3[0],  16(r0)
 
   lw a2, RDPStartPointer(r0)
   mtc0 a2, dpc_start
