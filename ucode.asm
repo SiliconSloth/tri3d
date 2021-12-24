@@ -5,175 +5,51 @@
 .include "lib/N64_RSP.asm"
 .include "lib/N64_RDP.asm"
 
-TC_major equ 0
+V_x equ 0
+V_y equ 4
+V_z equ 8
+V_w equ 12
 
-TC_yl equ 4
-TC_ym equ 8
-TC_yh equ 12
+V_r equ 16
+V_g equ 20
+V_b equ 24
 
-TC_xl equ 16
-TC_dxldy equ 20
+V_s equ 28
+V_t equ 32
 
-TC_xh equ 24
-TC_dxhdy equ 28
-
-TC_xm equ 32
-TC_dxmdy equ 36
+V_size equ 36
 
 RDPStartPointer equ 0
 RDPEndPointer equ 4
-Coeffs equ 8
-
-Vertex1 equ 136
-Vertex2 equ 144
-Vertex3 equ 152
+Vertices equ 8
 
 
-.macro ComputeGradient, x1I, x1F, y1I, y1F, x2I, x2F, y2I, y2F, dxdyI, dxdyF, dxI, dxF, dyI, dyF, rdyI, rdyF
-  vsubc dxF, x2F, x1F
-  vsub dxI, x2I, x1I
+.macro Load, addr, part, ind, out
+  lsv out[0],  addr + part * 2 + V_size * (ind - 3)(a0)
+  lsv out[2],  addr + part * 2 + V_size * ind(a0)
 
-  vsubc dyF, y2F, y1F
-  vsub dyI, y2I, y1I
+  lsv out[4],  addr + part * 2 + V_size * (ind - 3)(a1)
+  lsv out[6],  addr + part * 2 + V_size * ind(a1)
 
-  vrcph rdyI[0], dyI[0]
-  vrcpl rdyF[0], dyF[0]
-  vrcph rdyI[0], dyI[1]
-  vrcpl rdyF[1], dyF[1]
-  vrcph rdyI[1], dyI[2]
-  vrcpl rdyF[2], dyF[2]
-  vrcph rdyI[2], dyI[3]
-  vrcpl rdyF[3], dyF[3]
-  vrcph rdyI[3], dyI[4]
-  vrcpl rdyF[4], dyF[4]
-  vrcph rdyI[4], dyI[5]
-  vrcpl rdyF[5], dyF[5]
-  vrcph rdyI[5], dyI[6]
-  vrcpl rdyF[6], dyF[6]
-  vrcph rdyI[6], dyI[7]
-  vrcpl rdyF[7], dyF[7]
-  vrcph rdyI[7], dyI[0]
+  lsv out[8],  addr + part * 2 + V_size * (ind - 3)(a2)
+  lsv out[10], addr + part * 2 + V_size * ind(a2)
 
-  vmudn rdyF, rdyF, consts[2]
-  vmadm rdyI, rdyI, consts[2]
-  vmadn rdyF, rdyF, consts[0]
-
-  vmudl dxdyF, dxF, rdyF
-  vmadm dxdyI, dxI, rdyF
-  vmadn dxdyF, dxF, rdyI
-  vmadh dxdyI, dxI, rdyI
-
-  vge dyI, zeros, dyI
-  vmrg dxdyI, zeros, dxdyI
-  vmrg dxdyF, zeros, dxdyF
+  lsv out[12], addr + part * 2 + V_size * (ind - 3)(a3)
+  lsv out[14], addr + part * 2 + V_size * ind(a3)
 .endmacro
 
 
 RSPStart:
-  la a0, 0x0F000000
+  la a0, Vertices + V_size * 3
+  la a1, Vertices + V_size * 9
+  la a2, Vertices + V_size * 15
+  la a3, Vertices + V_size * 21
 
-  lb a1, Coeffs+TC_major(r0)
-  sll a1, 23
-  or a0, a1
+  Load V_t, 1, 2, v0
 
-  lw a1, Coeffs+TC_yl(r0)
-  srl a1, 14
-  or a0, a1
+  sqv v0[0],  16(r0)
 
   lw a2, RDPStartPointer(r0)
-  sw a0, 0(a2)
-
-  lw a0, Coeffs+TC_ym(r0)
-  la a1, 0xFFFFC000
-  and a0, a1
-  sll a0, 2
-
-  lw a1, Coeffs+TC_yh(r0)
-  srl a1, 14
-  or a0, a1
-
-  sw a0, 4(a2)
-
-  lw a0, Coeffs+TC_xl(r0)
-  sw a0, 8(a2)
-
-  // lw a0, Coeffs+TC_dxldy(r0)
-  // sw a0, 12(a2)
-
-  lw a0, Coeffs+TC_xh(r0)
-  sw a0, 16(a2)
-
-  // lw a0, Coeffs+TC_dxhdy(r0)
-  // sw a0, 20(a2)
-
-  lw a0, Coeffs+TC_xm(r0)
-  sw a0, 24(a2)
-
-  // lw a0, Coeffs+TC_dxmdy(r0)
-  // sw a0, 28(a2)
-
-  la a3, Vertex1
-
-zeros equ v30
-consts equ v31
-
-  la a0, 0
-  mtc2 a0, consts[0]
-  la a0, 1
-  mtc2 a0, consts[2]
-  la a0, 2
-  mtc2 a0, consts[4]
-
-x1I equ v0
-x1F equ v1
-y1I equ v2
-y1F equ v3
-
-x2I equ v4
-x2F equ v5
-y2I equ v6
-y2F equ v7
-
-x3I equ v8
-x3F equ v9
-y3I equ v10
-y3F equ v11
-
-  lsv x1I[0], 0(a3)
-  lsv x1F[0], 2(a3)
-  lsv y1I[0], 4(a3)
-  lsv y1F[0], 6(a3)
-
-  lsv x2I[0], 8(a3)
-  lsv x2F[0], 10(a3)
-  lsv y2I[0], 12(a3)
-  lsv y2F[0], 14(a3)
-  
-  lsv x3I[0], 16(a3)
-  lsv x3F[0], 18(a3)
-  lsv y3I[0], 20(a3)
-  lsv y3F[0], 22(a3)
-
-dxldyI equ v12
-dxldyF equ v13
-dxmdyI equ v14
-dxmdyF equ v15
-dxhdyI equ v16
-dxhdyF equ v17
-
-  ComputeGradient x2I, x2F, y2I, y2F, x3I, x3F, y3I, y3F, dxldyI, dxldyF, v18, v19, v20, v21, v22, v23
-  ComputeGradient x1I, x1F, y1I, y1F, x2I, x2F, y2I, y2F, dxmdyI, dxmdyF, v18, v19, v20, v21, v22, v23
-  ComputeGradient x1I, x1F, y1I, y1F, x3I, x3F, y3I, y3F, dxhdyI, dxhdyF, v18, v19, v20, v21, v22, v23
-
-  //sqv x1I, 16(r0)
-
-  ssv dxldyI[0], 12(a2)
-  ssv dxldyF[0], 14(a2)
-  ssv dxhdyI[0], 20(a2)
-  ssv dxhdyF[0], 22(a2)
-  ssv dxmdyI[0], 28(a2)
-  ssv dxmdyF[0], 30(a2)
-
   mtc0 a2, dpc_start
   
   lw a0, RDPEndPointer(r0)
