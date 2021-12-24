@@ -13,8 +13,14 @@ RDPStartPointer equ 0
 RDPEndPointer equ 4
 Vertices equ 8
 
+consts equ v31
+const_4 equ 0
+
 
 RSPStart:
+  la t0, 4
+  mtc2 t0, consts[const_4]
+
   la a0, Vertices + V_size * 3
   la a1, Vertices + V_size * 9
   la a2, Vertices + V_size * 15
@@ -26,10 +32,12 @@ RSPStart:
   addi t2, t0, C_size * 4
   addi t3, t0, C_size * 6
 
-  Load V_t, 1, 2, v0
+  Load V_t, 0, 2, v0
   Store C_b_i, v1
 
-  sqv v0[0],  16(r0)
+  Mul_ici const_4, v0, v2
+
+  sqv v2[0],  16(r0)
 
   lw a2, RDPStartPointer(r0)
   mtc0 a2, dpc_start

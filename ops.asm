@@ -1,3 +1,8 @@
+.macro Mul_ici, ci, op, out
+  vmudh out, op, consts[ci]
+.endmacro
+
+
 .macro Load, addr, part, ind, out
   lsv out[0],  addr + part * 2 + V_size * (ind - 3)(a0)
   lsv out[2],  addr + part * 2 + V_size * ind(a0)
