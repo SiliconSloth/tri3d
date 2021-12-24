@@ -5,19 +5,8 @@
 .include "lib/N64_RSP.asm"
 .include "lib/N64_RDP.asm"
 
-V_x equ 0
-V_y equ 4
-V_z equ 8
-V_w equ 12
+.include "types.asm"
 
-V_r equ 16
-V_g equ 20
-V_b equ 24
-
-V_s equ 28
-V_t equ 32
-
-V_size equ 36
 
 RDPStartPointer equ 0
 RDPEndPointer equ 4
@@ -39,13 +28,35 @@ Vertices equ 8
 .endmacro
 
 
+.macro Store, addr, value
+  ssv value[0],  addr - C_size(t0)
+  ssv value[2],  addr(t0)
+  
+  ssv value[4],  addr - C_size(t1)
+  ssv value[6],  addr(t1)
+  
+  ssv value[8],  addr - C_size(t2)
+  ssv value[10], addr(t2)
+  
+  ssv value[12], addr - C_size(t3)
+  ssv value[14], addr(t3)
+.endmacro
+
+
 RSPStart:
   la a0, Vertices + V_size * 3
   la a1, Vertices + V_size * 9
   la a2, Vertices + V_size * 15
   la a3, Vertices + V_size * 21
 
+  lw t0, RDPStartPointer(r0)
+  addi t0, t0, C_size
+  addi t1, t0, C_size * 2
+  addi t2, t0, C_size * 4
+  addi t3, t0, C_size * 6
+
   Load V_t, 1, 2, v0
+  Store C_b_i, v1
 
   sqv v0[0],  16(r0)
 
