@@ -48,7 +48,7 @@ $(BUILDDIR)/ucode.o: $(BUILDDIR)/ucode.bin
 		--strip-symbol _binary_$(BUILDDIR)_ucode_bin_size \
 		--add-symbol tri3d_ucode_data_start=.data:0x$$(grep "rdpbuffer" $(BUILDDIR)/ucode_sym.txt | cut -b-8)
 
-$(BUILDDIR)/ucode.bin: ucode.asm
+$(BUILDDIR)/ucode.bin: ucode.asm types.asm ops.asm
 	$(ARMIPS) ucode.asm -strequ outfile $(BUILDDIR)/ucode.bin -sym $(BUILDDIR)/ucode_sym.txt
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.c
