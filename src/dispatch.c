@@ -241,7 +241,7 @@ void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexIn
 }
 
 fixed32 dbg(int i) {
-	return MUL_FX32(vertex_buffer[i * 3 + 2].x - vertex_buffer[i * 3 + 1].x, vertex_buffer[i * 3 + 2].y - vertex_buffer[i * 3 + 1].y);
+	return command_buffer[i][3];
 }
 
 void flush_triangles() {

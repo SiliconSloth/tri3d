@@ -48,6 +48,12 @@
 .endmacro
 
 
+.macro Div_ifif, res_i, res_f, a_i, a_f, b_i, b_f, tmp0, tmp1
+  Rec_ifif tmp0, tmp1, b_i, b_f
+  Mul_ifif res_i, res_f, a_i, a_f, tmp0, tmp1
+.endmacro
+
+
 .macro Load, res, addr, part, ind
   lsv res[0],  addr + part * 2 + V_size * (ind - 3)(a0)
   lsv res[2],  addr + part * 2 + V_size * ind(a0)
