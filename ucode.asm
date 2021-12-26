@@ -14,13 +14,18 @@ RDPStartPointer equ 0
 RDPEndPointer equ 4
 Vertices equ 8
 
+zeros equ v30
 consts equ v31
-const_4 equ 0
+
+const_2 equ 0
+const_4 equ 1
 
 
 RSPStart:
+  la t0, 2
+  mtc2 t0, consts[0]
   la t0, 4
-  mtc2 t0, consts[const_4]
+  mtc2 t0, consts[2]
 
   la a0, Vertices + V_size * 3
   la a1, Vertices + V_size * 9

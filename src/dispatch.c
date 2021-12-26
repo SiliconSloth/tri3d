@@ -241,7 +241,7 @@ void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexIn
 }
 
 fixed32 dbg(int i) {
-	return vertex_buffer[i * 3 + 2].y - vertex_buffer[i * 3 + 1].y;
+	return (vertex_buffer[i * 3 + 2].x - vertex_buffer[i * 3 + 1].x) * 2;
 }
 
 void flush_triangles() {
