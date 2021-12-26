@@ -1,7 +1,6 @@
 .macro StoreY, yp_a, y_i, y_f, tmp0, tmp1
-    yp equ tmp0
-    Mul_ifci_i yp, const_4, y_i, y_f, tmp1
-    Store yp_a, yp
+    Mul_ifci_i tmp0, const_4, y_i, y_f, tmp1
+    Store yp_a, tmp0
 .endmacro
 
 .macro ComputeCoeffs, tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, tmp13, tmp14, tmp15, tmp16, tmp17, tmp18, tmp19, tmp20, tmp21, tmp22, tmp23, tmp24, tmp25, tmp26
@@ -88,6 +87,10 @@
     Sub_ifif xm_i, xm_f, x1_i, x1_f, oxm_i, oxm_f
     Store C_xm_i, xm_i
     Store C_xm_f, xm_f
+    yl_i equ tmp18
+    yl_f equ tmp19
+    Add_ifcf yl_i, yl_f, y_mask, y3_i, y3_f
+    StoreY C_yl, yl_i, yl_f, tmp10, tmp11
 
     cfc2 t0, vcc
     sw t0, 28(r0)

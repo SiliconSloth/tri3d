@@ -19,6 +19,7 @@ consts equ v31
 
 const_2 equ 0
 const_4 equ 1
+y_mask equ 2
 
 
 RSPStart:
@@ -26,6 +27,8 @@ RSPStart:
   mtc2 t0, consts[0]
   la t0, 4
   mtc2 t0, consts[2]
+  la t0, 0x3FFF
+  mtc2 t0, consts[4]
 
   la a0, Vertices + V_size * 3
   la a1, Vertices + V_size * 9

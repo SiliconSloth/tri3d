@@ -1,3 +1,9 @@
+.macro Add_ifcf, res_i, res_f, ci, a_i, a_f
+  vaddc res_f, a_f, consts[ci]
+  vadd  res_i, a_i, zeros
+.endmacro
+
+
 .macro Sub_ifif, res_i, res_f, a_i, a_f, b_i, b_f
   vsubc res_f, a_f, b_f
   vsub  res_i, a_i, b_i
