@@ -40,6 +40,10 @@
     dxldy_f equ tmp17
     Div_ifif dxldy_i, dxldy_f, dx32_i, dx32_f, dy32_i, dy32_f, tmp18, tmp19
     LTE_cond_ii dy32_i, zeros, tmp12
+    Select dxldy_i, zeros, dxldy_i
+    Select dxldy_f, zeros, dxldy_f
+    Store C_dxldy_i, dxldy_i
+    Store C_dxldy_f, dxldy_f
 
     cfc2 t0, vcc
     sw t0, 28(r0)

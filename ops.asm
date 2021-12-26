@@ -59,6 +59,11 @@
 .endmacro
 
 
+.macro Select, res, a, b
+  vmrg res, a, b
+.endmacro
+
+
 .macro Load, res, addr, part, ind
   lsv res[0],  addr + part * 2 + V_size * (ind - 3)(a0)
   lsv res[2],  addr + part * 2 + V_size * ind(a0)
