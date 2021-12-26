@@ -164,7 +164,7 @@ void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexIn
 	// cp[4] = coeffs.xh;
 	// cp[5] = coeffs.dxhdy;
 
-	cp[6] = coeffs.xm;
+	// cp[6] = coeffs.xm;
 	// cp[7] = coeffs.dxmdy;
 
 	cp += 8;

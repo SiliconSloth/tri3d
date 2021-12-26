@@ -80,6 +80,14 @@
     Sub_ifif xh_i, xh_f, x1_i, x1_f, oxh_i, oxh_f
     Store C_xh_i, xh_i
     Store C_xh_f, xh_f
+    oxm_i equ tmp23
+    oxm_f equ tmp24
+    Mul_fif oxm_i, oxm_f, y1_f, dxmdy_i, dxmdy_f
+    xm_i equ tmp18
+    xm_f equ tmp19
+    Sub_ifif xm_i, xm_f, x1_i, x1_f, oxm_i, oxm_f
+    Store C_xm_i, xm_i
+    Store C_xm_f, xm_f
 
     cfc2 t0, vcc
     sw t0, 28(r0)
