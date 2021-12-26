@@ -1,6 +1,18 @@
+.macro Add_ifif, res_i, res_f, a_i, a_f, b_i, b_f
+  vaddc res_f, a_f, b_f
+  vadd  res_i, a_i, b_i
+.endmacro
+
+
 .macro Add_ifcf, res_i, res_f, ci, a_i, a_f
   vaddc res_f, a_f, consts[ci]
   vadd  res_i, a_i, zeros
+.endmacro
+
+
+.macro Sub_cff, res, ci, op
+  vadd  res, zeros, consts[ci]
+  vsub res, res, op
 .endmacro
 
 
@@ -64,6 +76,11 @@
 .macro Div_ifif, res_i, res_f, a_i, a_f, b_i, b_f, tmp0, tmp1
   Rec_ifif tmp0, tmp1, b_i, b_f
   Mul_ifif res_i, res_f, a_i, a_f, tmp0, tmp1
+.endmacro
+
+
+.macro BitAnd_c, res, ci, op
+  vand res, op, consts[ci]
 .endmacro
 
 

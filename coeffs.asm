@@ -95,8 +95,16 @@
     ym_f equ tmp11
     Add_ifcf ym_i, ym_f, y_mask, y2_i, y2_f
     StoreY C_ym, ym_i, ym_f, tmp8, tmp18
-
-    cfc2 t0, vcc
-    sw t0, 28(r0)
-    //sqv dxldy_f[0],  16(r0)
+    y2gn equ tmp8
+    BitAnd_c y2gn, y_mask, y2_f
+    y2_gap equ tmp9
+    Sub_cff y2_gap, max_gap, y2gn
+    oxl_i equ tmp8
+    oxl_f equ tmp10
+    Mul_fif oxl_i, oxl_f, y2_gap, dxldy_i, dxldy_f
+    xl_i equ tmp9
+    xl_f equ tmp11
+    Add_ifif xl_i, xl_f, x2_i, x2_f, oxl_i, oxl_f
+    Store C_xl_i, xl_i
+    Store C_xl_f, xl_f
 .endmacro
