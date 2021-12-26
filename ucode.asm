@@ -27,10 +27,13 @@ RSPStart:
   la a3, Vertices + V_size * 21
 
   lw t0, RDPStartPointer(r0)
-  addi t0, t0, C_size
-  addi t1, t0, C_size * 2
-  addi t2, t0, C_size * 4
-  addi t3, t0, C_size * 6
+  addi t1, t0, C_size
+  addi t2, t0, C_size * 2
+  addi t3, t0, C_size * 3
+  addi t4, t0, C_size * 4
+  addi t5, t0, C_size * 5
+  addi t6, t0, C_size * 6
+  addi t7, t0, C_size * 7
 
   Load V_y, 0, 2, v0
   Load V_y, 1, 2, v1

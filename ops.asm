@@ -20,15 +20,12 @@
 
 
 .macro Store, addr, value
-  ssv value[0],  addr - C_size(t0)
-  ssv value[2],  addr(t0)
-  
-  ssv value[4],  addr - C_size(t1)
-  ssv value[6],  addr(t1)
-  
-  ssv value[8],  addr - C_size(t2)
-  ssv value[10], addr(t2)
-  
-  ssv value[12], addr - C_size(t3)
-  ssv value[14], addr(t3)
+  ssv value[0],  addr(t0)
+  ssv value[2],  addr(t1)
+  ssv value[4],  addr(t2)
+  ssv value[6],  addr(t3)
+  ssv value[8],  addr(t4)
+  ssv value[10], addr(t5)
+  ssv value[12], addr(t6)
+  ssv value[14], addr(t7)
 .endmacro
