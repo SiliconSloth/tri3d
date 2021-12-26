@@ -23,6 +23,32 @@
     Select dade_f, zeros, dade_f
     Store dade_i_a, dade_i
     Store dade_f_a, dade_f
+    da_i equ tmp4
+    da_f equ tmp5
+    Mul_ifif da_i, da_f, dy21_i, dy21_f, dade_i, dade_f
+    a_mid_i equ tmp6
+    a_mid_f equ tmp7
+    Add_ifif a_mid_i, a_mid_f, a1_i, a1_f, da_i, da_f
+    a2_i equ tmp4
+    Load a2_i, a_a, 0, 1
+    a2_f equ tmp5
+    Load a2_f, a_a, 1, 1
+    da2m_i equ tmp8
+    da2m_f equ tmp9
+    Sub_ifif da2m_i, da2m_f, a2_i, a2_f, a_mid_i, a_mid_f
+    dadx_i equ tmp4
+    dadx_f equ tmp5
+    Div_ifif dadx_i, dadx_f, da2m_i, da2m_f, mid_width_i, mid_width_f, tmp6, tmp7
+    Store dadx_i_a, dadx_i
+    Store dadx_f_a, dadx_f
+    oa_i equ tmp4
+    oa_f equ tmp5
+    Mul_fif oa_i, oa_f, y1_frac, dade_i, dade_f
+    sa_i equ tmp2
+    sa_f equ tmp3
+    Sub_ifif sa_i, sa_f, a1_i, a1_f, oa_i, oa_f
+    Store sa_i_a, sa_i
+    Store sa_f_a, sa_f
 
     sqv a3_i[0],  32(r0)
 .endmacro

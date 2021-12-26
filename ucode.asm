@@ -17,27 +17,30 @@ Vertices equ 8
 zeros equ v30
 consts equ v31
 
-const_2 equ 0
-const_4 equ 1
-y_mask  equ 2
-max_gap equ 3
-maj_bit equ 4
-command equ 5
+const_1 equ 0
+const_2 equ 1
+const_4 equ 2
+y_mask  equ 3
+max_gap equ 4
+maj_bit equ 5
+command equ 6
 
 
 RSPStart:
-  la t0, 2
+  la t0, 1
   mtc2 t0, consts[0]
-  la t0, 4
+  la t0, 2
   mtc2 t0, consts[2]
-  la t0, 0x3FFF
+  la t0, 4
   mtc2 t0, consts[4]
-  la t0, 0x4000
+  la t0, 0x3FFF
   mtc2 t0, consts[6]
-  la t0, 0x80
+  la t0, 0x4000
   mtc2 t0, consts[8]
-  la t0, 0xF00
+  la t0, 0x80
   mtc2 t0, consts[10]
+  la t0, 0xF00
+  mtc2 t0, consts[12]
 
   la a0, Vertices + V_size * 3
   la a1, Vertices + V_size * 9
