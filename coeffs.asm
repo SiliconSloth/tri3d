@@ -72,6 +72,14 @@
     Select dxhdy_f, zeros, dxhdy_f
     Store C_dxhdy_i, dxhdy_i
     Store C_dxhdy_f, dxhdy_f
+    oxh_i equ tmp23
+    oxh_f equ tmp24
+    Mul_fif oxh_i, oxh_f, y1_f, dxhdy_i, dxhdy_f
+    xh_i equ tmp25
+    xh_f equ tmp26
+    Sub_ifif xh_i, xh_f, x1_i, x1_f, oxh_i, oxh_f
+    Store C_xh_i, xh_i
+    Store C_xh_f, xh_f
 
     cfc2 t0, vcc
     sw t0, 28(r0)

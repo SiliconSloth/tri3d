@@ -12,6 +12,13 @@
 .endmacro
 
 
+.macro Mul_fif, res_i, res_f, a_f, b_i, b_f
+  vmudl res_f, a_f, b_f
+  vmadn res_f, a_f, b_i
+  vmadh res_i, zeros, zeros
+.endmacro
+
+
 .macro Mul_ifci, res_i, res_f, ci, op_i, op_f
   vmudn res_f, op_f, consts[ci]
   vmadh res_i, op_i, consts[ci]
