@@ -21,6 +21,8 @@ const_2 equ 0
 const_4 equ 1
 y_mask  equ 2
 max_gap equ 3
+maj_bit equ 4
+command equ 5
 
 
 RSPStart:
@@ -32,8 +34,10 @@ RSPStart:
   mtc2 t0, consts[4]
   la t0, 0x4000
   mtc2 t0, consts[6]
-
-  sqv consts[0],  16(r0)
+  la t0, 0x80
+  mtc2 t0, consts[8]
+  la t0, 0xF00
+  mtc2 t0, consts[10]
 
   la a0, Vertices + V_size * 3
   la a1, Vertices + V_size * 9

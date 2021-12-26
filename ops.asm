@@ -4,6 +4,11 @@
 .endmacro
 
 
+.macro Add_ici, res_i, ci, op
+  vadd  res_i, op, consts[ci]
+.endmacro
+
+
 .macro Add_ifcf, res_i, res_f, ci, a_i, a_f
   vaddc res_f, a_f, consts[ci]
   vadd  res_i, a_i, zeros
@@ -84,6 +89,12 @@
 .endmacro
 
 
+.macro LT_cond_ifif, a_i, a_f, b_i, b_f, tmp
+  vsubc tmp, a_f, b_f
+  vlt tmp, a_i, b_i
+.endmacro
+
+
 .macro LTE_cond_ii, a, b, tmp
   vge tmp, b, a
 .endmacro
@@ -91,6 +102,11 @@
 
 .macro Select, res, a, b
   vmrg res, a, b
+.endmacro
+
+
+.macro Select_c, res, ci, op
+  vmrg res, op, consts[ci]
 .endmacro
 
 

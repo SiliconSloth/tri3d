@@ -107,4 +107,17 @@
     Add_ifif xl_i, xl_f, x2_i, x2_f, oxl_i, oxl_f
     Store C_xl_i, xl_i
     Store C_xl_f, xl_f
+    dx31dy21_i equ tmp8
+    dx31dy21_f equ tmp9
+    Mul_ifif dx31dy21_i, dx31dy21_f, dx31_i, dx31_f, dy21_i, dy21_f
+    dy31dx21_i equ tmp10
+    dy31dx21_f equ tmp11
+    Mul_ifif dy31dx21_i, dy31dx21_f, dy31_i, dy31_f, dx21_i, dx21_f
+    LT_cond_ifif dy31dx21_i, dy31dx21_f, dx31dy21_i, dx31dy21_f, tmp12
+    header equ tmp8
+    Select_c header, maj_bit, zeros
+    Add_ici header, command, header
+    Store C_header, header
+
+    sqv header[0],  32(r0)
 .endmacro
