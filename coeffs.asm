@@ -91,6 +91,10 @@
     yl_f equ tmp19
     Add_ifcf yl_i, yl_f, y_mask, y3_i, y3_f
     StoreY C_yl, yl_i, yl_f, tmp10, tmp11
+    ym_i equ tmp10
+    ym_f equ tmp11
+    Add_ifcf ym_i, ym_f, y_mask, y2_i, y2_f
+    StoreY C_ym, ym_i, ym_f, tmp8, tmp18
 
     cfc2 t0, vcc
     sw t0, 28(r0)

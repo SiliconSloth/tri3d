@@ -156,7 +156,7 @@ void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexIn
 	uint32_t *cp = command_buffer[triangle_ind];
 
 	cp[0] = 0xF000000 | (coeffs.major << 23); //| ((uint32_t) coeffs.yl >> 14);
-	cp[1] = ((coeffs.ym & 0xFFFFC000) << 2); //| ((uint32_t) coeffs.yh >> 14);
+	// cp[1] = ((coeffs.ym & 0xFFFFC000) << 2) | ((uint32_t) coeffs.yh >> 14);
 
 	cp[2] = coeffs.xl;
 	// cp[3] = coeffs.dxldy;
