@@ -3,6 +3,30 @@
     Store yp_a, tmp0
 .endmacro
 
+.macro ComputeAttr, a_a, sa_i_a, sa_f_a, dade_i_a, dade_f_a, dadx_i_a, dadx_f_a, dy31_i, dy31_f, dy21_i, dy21_f, mid_width_i, mid_width_f, y1_frac, tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9
+    a1_i equ tmp0
+    Load a1_i, a_a, 0, 0
+    a1_f equ tmp1
+    Load a1_f, a_a, 1, 0
+    a3_i equ tmp2
+    Load a3_i, a_a, 0, 2
+    a3_f equ tmp3
+    Load a3_f, a_a, 1, 2
+    da31_i equ tmp4
+    da31_f equ tmp5
+    Sub_ifif da31_i, da31_f, a3_i, a3_f, a1_i, a1_f
+    dade_i equ tmp2
+    dade_f equ tmp3
+    Div_ifif dade_i, dade_f, da31_i, da31_f, dy31_i, dy31_f, tmp6, tmp7
+    LTE_cond_ii dy31_i, zeros, tmp4
+    Select dade_i, zeros, dade_i
+    Select dade_f, zeros, dade_f
+    Store dade_i_a, dade_i
+    Store dade_f_a, dade_f
+
+    sqv a3_i[0],  32(r0)
+.endmacro
+
 .macro ComputeCoeffs, tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, tmp13, tmp14, tmp15, tmp16, tmp17, tmp18, tmp19, tmp20, tmp21, tmp22, tmp23, tmp24, tmp25, tmp26
     x1_i equ tmp0
     Load x1_i, V_x, 0, 0
@@ -118,6 +142,14 @@
     Select_c header, maj_bit, zeros
     Add_ici header, command, header
     Store C_header, header
-
-    sqv header[0],  32(r0)
+    ox_i equ tmp8
+    ox_f equ tmp9
+    Mul_ifif ox_i, ox_f, dy21_i, dy21_f, dxhdy_i, dxhdy_f
+    x_mid_i equ tmp6
+    x_mid_f equ tmp10
+    Add_ifif x_mid_i, x_mid_f, x1_i, x1_f, ox_i, ox_f
+    mid_width_i equ tmp0
+    mid_width_f equ tmp1
+    Sub_ifif mid_width_i, mid_width_f, x2_i, x2_f, x_mid_i, x_mid_f
+    ComputeAttr V_r, C_r_i, C_r_f, C_drde_i, C_drde_f, C_drdx_i, C_drdx_f, dy31_i, dy31_f, dy21_i, dy21_f, mid_width_i, mid_width_f, y1_f, tmp2, tmp3, tmp6, tmp8, tmp9, tmp10, tmp11, tmp12, tmp13, tmp16
 .endmacro
