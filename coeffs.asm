@@ -39,6 +39,9 @@
     dxldy_i equ tmp16
     dxldy_f equ tmp17
     Div_ifif dxldy_i, dxldy_f, dx32_i, dx32_f, dy32_i, dy32_f, tmp18, tmp19
+    LTE_cond_ii dy32_i, zeros, tmp12
 
-    sqv dxldy_f[0],  16(r0)
+    cfc2 t0, vcc
+    sw t0, 28(r0)
+    //sqv dxldy_f[0],  16(r0)
 .endmacro

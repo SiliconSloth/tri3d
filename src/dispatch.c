@@ -241,8 +241,19 @@ void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexIn
 }
 
 fixed32 dbg(int i) {
-	return command_buffer[i][3];
+	return (vertex_buffer[i * 3 + 2].y - vertex_buffer[i * 3 + 1].y < FIXED32(1));
 }
+
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)  \
+  (byte & 0x80 ? '1' : '0'), \
+  (byte & 0x40 ? '1' : '0'), \
+  (byte & 0x20 ? '1' : '0'), \
+  (byte & 0x10 ? '1' : '0'), \
+  (byte & 0x08 ? '1' : '0'), \
+  (byte & 0x04 ? '1' : '0'), \
+  (byte & 0x02 ? '1' : '0'), \
+  (byte & 0x01 ? '1' : '0') 
 
 void flush_triangles() {
 	PROFILE_START(PS_LOAD, 0);
@@ -254,6 +265,7 @@ void flush_triangles() {
 	command_pointer += sizeof(command_buffer[0]) * triangle_ind;
 	triangle_ind = 0;
 	swap_command_buffers();
-	fprintf(stderr, "%8lX %8lX %8lX %8lX\n", *(SP_DMEM + 4), *(SP_DMEM + 4 + 1), *(SP_DMEM + 4 + 2), *(SP_DMEM + 4 + 3));
+	// fprintf(stderr, "%8lX %8lX %8lX %8lX\n", *(SP_DMEM + 4), *(SP_DMEM + 4 + 1), *(SP_DMEM + 4 + 2), *(SP_DMEM + 4 + 3));
+	fprintf(stderr, BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(*(SP_DMEM + 4 + 3)));
 	PROFILE_STOP(PS_LOAD, 0);
 }

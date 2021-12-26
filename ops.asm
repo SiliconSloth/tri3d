@@ -54,6 +54,11 @@
 .endmacro
 
 
+.macro LTE_cond_ii, a, b, tmp
+  vge tmp, b, a
+.endmacro
+
+
 .macro Load, res, addr, part, ind
   lsv res[0],  addr + part * 2 + V_size * (ind - 3)(a0)
   lsv res[2],  addr + part * 2 + V_size * ind(a0)
