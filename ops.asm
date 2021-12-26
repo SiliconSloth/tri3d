@@ -17,6 +17,29 @@
 .endmacro
 
 
+.macro Rec_ifif, res_i, res_f, op_i, op_f
+  vrcph res_i[0], op_i[0]
+  vrcpl res_f[0], op_f[0]
+  vrcph res_i[0], op_i[1]
+  vrcpl res_f[1], op_f[1]
+  vrcph res_i[1], op_i[2]
+  vrcpl res_f[2], op_f[2]
+  vrcph res_i[2], op_i[3]
+  vrcpl res_f[3], op_f[3]
+  vrcph res_i[3], op_i[4]
+  vrcpl res_f[4], op_f[4]
+  vrcph res_i[4], op_i[5]
+  vrcpl res_f[5], op_f[5]
+  vrcph res_i[5], op_i[6]
+  vrcpl res_f[6], op_f[6]
+  vrcph res_i[6], op_i[7]
+  vrcpl res_f[7], op_f[7]
+  vrcph res_i[7], op_i[0]
+
+  Mul_ifci res_i, res_f, const_2, res_i, res_f
+.endmacro
+
+
 .macro Load, res, addr, part, ind
   lsv res[0],  addr + part * 2 + V_size * (ind - 3)(a0)
   lsv res[2],  addr + part * 2 + V_size * ind(a0)
