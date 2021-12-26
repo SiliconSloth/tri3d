@@ -35,10 +35,8 @@ RSPStart:
   addi t5, t0, C_size * 5
   addi t6, t0, C_size * 6
   addi t7, t0, C_size * 7
-  
-  ComputeCoeffs v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26
 
-  sqv v3[0],  16(r0)
+  ComputeCoeffs v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26
 
   lw a2, RDPStartPointer(r0)
   mtc0 a2, dpc_start

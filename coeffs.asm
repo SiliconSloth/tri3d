@@ -30,4 +30,12 @@
     y3_f equ tmp11
     Load y3_f, V_y, 1, 2
     StoreY C_yh, y1_i, y1_f, tmp12, tmp13
+    dx32_i equ tmp12
+    dx32_f equ tmp13
+    Sub_ifif dx32_i, dx32_f, x3_i, x3_f, x2_i, x2_f
+    dy32_i equ tmp14
+    dy32_f equ tmp15
+    Sub_ifif dy32_i, dy32_f, y3_i, y3_f, y2_i, y2_f
+
+    sqv dy32_f[0],  16(r0)
 .endmacro

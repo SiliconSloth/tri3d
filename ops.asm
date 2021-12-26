@@ -1,3 +1,9 @@
+.macro Sub_ifif, res_i, res_f, a_i, a_f, b_i, b_f
+  vsubc res_f, a_f, b_f
+  vsub  res_i, a_i, b_i
+.endmacro
+
+
 .macro Mul_ifci_i, res, ci, op_i, op_f, tmp
   vmudn tmp, op_f, consts[ci]
   vmadh res, op_i, consts[ci]
