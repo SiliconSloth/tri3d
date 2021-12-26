@@ -37,7 +37,7 @@
     dy32_f equ tmp15
     Sub_ifif dy32_i, dy32_f, y3_i, y3_f, y2_i, y2_f
 
-    Rec_ifif tmp20, tmp21, dx32_i, dx32_f
+    Mul_ifif tmp20, tmp21, dx32_i, dx32_f, dy32_i, dy32_f
 
     sqv tmp21[0],  16(r0)
 .endmacro

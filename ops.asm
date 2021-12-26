@@ -4,6 +4,14 @@
 .endmacro
 
 
+.macro Mul_ifif, res_i, res_f, a_i, a_f, b_i, b_f
+  vmudl res_f, a_f, b_f
+  vmadm res_i, a_i, b_f
+  vmadn res_f, a_f, b_i
+  vmadh res_i, a_i, b_i
+.endmacro
+
+
 .macro Mul_ifci, res_i, res_f, ci, op_i, op_f
   vmudn res_f, op_f, consts[ci]
   vmadh res_i, op_i, consts[ci]
