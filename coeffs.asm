@@ -44,6 +44,34 @@
     Select dxldy_f, zeros, dxldy_f
     Store C_dxldy_i, dxldy_i
     Store C_dxldy_f, dxldy_f
+    dx21_i equ tmp12
+    dx21_f equ tmp13
+    Sub_ifif dx21_i, dx21_f, x2_i, x2_f, x1_i, x1_f
+    dy21_i equ tmp14
+    dy21_f equ tmp15
+    Sub_ifif dy21_i, dy21_f, y2_i, y2_f, y1_i, y1_f
+    dxmdy_i equ tmp18
+    dxmdy_f equ tmp19
+    Div_ifif dxmdy_i, dxmdy_f, dx21_i, dx21_f, dy21_i, dy21_f, tmp20, tmp21
+    LTE_cond_ii dy21_i, zeros, tmp20
+    Select dxmdy_i, zeros, dxmdy_i
+    Select dxmdy_f, zeros, dxmdy_f
+    Store C_dxmdy_i, dxmdy_i
+    Store C_dxmdy_f, dxmdy_f
+    dx31_i equ tmp20
+    dx31_f equ tmp21
+    Sub_ifif dx31_i, dx31_f, x3_i, x3_f, x1_i, x1_f
+    dy31_i equ tmp4
+    dy31_f equ tmp5
+    Sub_ifif dy31_i, dy31_f, y3_i, y3_f, y1_i, y1_f
+    dxhdy_i equ tmp6
+    dxhdy_f equ tmp22
+    Div_ifif dxhdy_i, dxhdy_f, dx31_i, dx31_f, dy31_i, dy31_f, tmp23, tmp24
+    LTE_cond_ii dy31_i, zeros, tmp23
+    Select dxhdy_i, zeros, dxhdy_i
+    Select dxhdy_f, zeros, dxhdy_f
+    Store C_dxhdy_i, dxhdy_i
+    Store C_dxhdy_f, dxhdy_f
 
     cfc2 t0, vcc
     sw t0, 28(r0)
