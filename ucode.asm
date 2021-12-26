@@ -7,6 +7,7 @@
 
 .include "types.asm"
 .include "ops.asm"
+.include "coeffs.asm"
 
 
 RDPStartPointer equ 0
@@ -35,11 +36,10 @@ RSPStart:
   addi t6, t0, C_size * 6
   addi t7, t0, C_size * 7
 
-  Load V_y, 0, 2, v0
-  Load V_y, 1, 2, v1
-  Store C_b_i, v2
+  Load V_y, 0, 0, v0
+  Load V_y, 1, 0, v1
 
-  Mul_ifci_i const_4, v0, v1, v3, v4
+  StoreY C_yh, v0, v1, v3, v4
 
   sqv v3[0],  16(r0)
 

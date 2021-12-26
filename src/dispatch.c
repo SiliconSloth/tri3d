@@ -156,7 +156,7 @@ void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexIn
 	uint32_t *cp = command_buffer[triangle_ind];
 
 	cp[0] = 0xF000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
-	cp[1] = ((coeffs.ym & 0xFFFFC000) << 2) | ((uint32_t) coeffs.yh >> 14);
+	cp[1] = ((coeffs.ym & 0xFFFFC000) << 2); //| ((uint32_t) coeffs.yh >> 14);
 
 	cp[2] = coeffs.xl;
 	cp[3] = coeffs.dxldy;
@@ -240,10 +240,13 @@ void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexIn
 	}
 }
 
+int dbg(int i) {
+	return command_buffer[i][1] & 0xFFFF;
+}
+
 void flush_triangles() {
 	PROFILE_START(PS_LOAD, 0);
-	int ind = 2;
-	fprintf(stderr, "%8lX %8lX %8lX %8lX %8lX %8lX %8lX %8lX\n", vertex_buffer[ind].y, vertex_buffer[ind + 3].y, vertex_buffer[ind + 6].y, vertex_buffer[ind + 9].y, vertex_buffer[ind + 12].y, vertex_buffer[ind + 15].y, vertex_buffer[ind + 18].y, vertex_buffer[ind + 21].y);
+	fprintf(stderr, "%8X %8X %8X %8X %8X %8X %8X %8X\n", dbg(0), dbg(1), dbg(2), dbg(3), dbg(4), dbg(5), dbg(6), dbg(7));
 	// dma_to_dmem(&coeffs, COEFFS_LOC, 128);
 	dma_to_dmem(vertex_buffer, VERTICES_LOC, sizeof(vertex_buffer));
 	dma_to_dmem(command_buffer, command_pointer, sizeof(command_buffer));
