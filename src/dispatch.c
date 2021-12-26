@@ -184,14 +184,14 @@ void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexIn
 	cp[8] = /*(coeffs.drde & 0xFFFF0000) |*/ ((uint32_t) coeffs.dgde >> 16);
 	cp[9] = coeffs.dbde & 0xFFFF0000;
 
-	cp[10] = 0;
-	cp[11] = 0;
+	// cp[10] = 0;
+	// cp[11] = 0;
 
 	cp[12] = /*((uint32_t) coeffs.drde << 16) |*/ (coeffs.dgde & 0xFFFF);
 	cp[13] = (uint32_t) coeffs.dbde << 16;
 
-	cp[14] = 0;
-	cp[15] = 0;
+	// cp[14] = 0;
+	// cp[15] = 0;
 
 	cp += 16;
 
