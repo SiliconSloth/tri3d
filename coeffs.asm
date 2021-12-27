@@ -85,9 +85,11 @@
     Add_ifif tmp9, tmp11, tmp2, tmp3, tmp8, tmp10
     Store C_xl_i, tmp9
     Store C_xl_f, tmp11
-    Mul_ifif tmp8, tmp9, tmp20, tmp21, tmp14, tmp15
-    Mul_ifif tmp10, tmp11, tmp4, tmp5, tmp12, tmp13
-    LT_cond_ifif tmp10, tmp11, tmp8, tmp9, tmp12
+    Mul_ifcf tmp8, tmp9, const_r4, tmp20, tmp21
+    Mul_ifif tmp10, tmp11, tmp8, tmp9, tmp14, tmp15
+    Mul_ifcf tmp8, tmp9, const_r4, tmp4, tmp5
+    Mul_ifif tmp16, tmp17, tmp8, tmp9, tmp12, tmp13
+    LT_cond_ifif tmp16, tmp17, tmp10, tmp11, tmp8
     Select_c tmp8, maj_bit, zeros
     Add_ici tmp8, command, tmp8
     Store C_header, tmp8
