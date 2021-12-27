@@ -169,20 +169,20 @@ void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexIn
 
 	cp += 8;
 
-	cp[0] = /*(coeffs.red & 0xFFFF0000) |*/ ((uint32_t) coeffs.green >> 16);
-	cp[1] = coeffs.blue & 0xFFFF0000;
+	// cp[0] = (coeffs.red & 0xFFFF0000) | ((uint32_t) coeffs.green >> 16);
+	// cp[1] = coeffs.blue & 0xFFFF0000;
 
-	cp[2] = /*(coeffs.drdx & 0xFFFF0000) |*/ ((uint32_t) coeffs.dgdx >> 16);
-	cp[3] = coeffs.dbdx & 0xFFFF0000;
+	// cp[2] = (coeffs.drdx & 0xFFFF0000) | ((uint32_t) coeffs.dgdx >> 16);
+	// cp[3] = coeffs.dbdx & 0xFFFF0000;
 
-	cp[4] = /*((uint32_t) coeffs.red << 16) |*/ ((uint32_t) coeffs.green & 0xFFFF);
-	cp[5] = (uint32_t) coeffs.blue << 16;
+	// cp[4] = ((uint32_t) coeffs.red << 16) | ((uint32_t) coeffs.green & 0xFFFF);
+	// cp[5] = (uint32_t) coeffs.blue << 16;
 
-	cp[6] = /*((uint32_t) coeffs.drdx << 16) |*/ ((uint32_t) coeffs.dgdx & 0xFFFF);
-	cp[7] = (uint32_t) coeffs.dbdx << 16;
+	// cp[6] = ((uint32_t) coeffs.drdx << 16) | ((uint32_t) coeffs.dgdx & 0xFFFF);
+	// cp[7] = (uint32_t) coeffs.dbdx << 16;
 
-	cp[8] = /*(coeffs.drde & 0xFFFF0000) |*/ ((uint32_t) coeffs.dgde >> 16);
-	cp[9] = coeffs.dbde & 0xFFFF0000;
+	// cp[8] = (coeffs.drde & 0xFFFF0000) | ((uint32_t) coeffs.dgde >> 16);
+	// cp[9] = coeffs.dbde & 0xFFFF0000;
 
 	// cp[10] = 0;
 	// cp[11] = 0;
