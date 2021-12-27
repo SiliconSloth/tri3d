@@ -74,19 +74,19 @@ void load_cube(float x, float y, float z, Matrix4 *view_transform) {
 
 		VertexInfo v1 = {
 			transformed_vertices[i1][0], transformed_vertices[i1][1], transformed_vertices[i1][2], transformed_vertices[i1][3],
-			vertex_colors[i1][0], vertex_colors[i1][1], vertex_colors[i1][2],
+			vertex_colors[i1][0], vertex_colors[i1][1], vertex_colors[i1][2], vertex_colors[i1][3],
 			tex_coords[(i % 2) * 3][0], tex_coords[(i % 2) * 3][1]
 		};
 			
 		VertexInfo v2 = {
 			transformed_vertices[i2][0], transformed_vertices[i2][1], transformed_vertices[i2][2], transformed_vertices[i2][3],
-			vertex_colors[i2][0], vertex_colors[i2][1], vertex_colors[i2][2],
+			vertex_colors[i2][0], vertex_colors[i2][1], vertex_colors[i2][2], vertex_colors[i1][3],
 			tex_coords[(i % 2) * 3 + 1][0], tex_coords[(i % 2) * 3 + 1][1]
 		};
 
 		VertexInfo v3 = {
 			transformed_vertices[i3][0], transformed_vertices[i3][1], transformed_vertices[i3][2], transformed_vertices[i3][3],
-			vertex_colors[i3][0], vertex_colors[i3][1], vertex_colors[i3][2],
+			vertex_colors[i3][0], vertex_colors[i3][1], vertex_colors[i3][2], vertex_colors[i1][3],
 			tex_coords[(i % 2) * 3 + 2][0], tex_coords[(i % 2) * 3 + 2][1]
 		};
 

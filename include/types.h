@@ -68,6 +68,7 @@ typedef struct {
 	fixed32 r;
 	fixed32 g;
 	fixed32 b;
+	fixed32 a;
 
 	fixed32 s;
 	fixed32 t;

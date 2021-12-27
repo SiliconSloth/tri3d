@@ -156,7 +156,7 @@ fixed32 interpolate(fixed32 a, fixed32 b, fixed32 p) {
 VertexInfo interpolate_vertices(VertexInfo v1, VertexInfo v2, fixed32 p) {
 	VertexInfo out = {
 		interpolate(v1.x, v2.x, p), interpolate(v1.y, v2.y, p), interpolate(v1.z, v2.z, p), interpolate(v1.w, v2.w, p),
-		interpolate(v1.r, v2.r, p), interpolate(v1.g, v2.g, p), interpolate(v1.b, v2.b, p),
+		interpolate(v1.r, v2.r, p), interpolate(v1.g, v2.g, p), interpolate(v1.b, v2.b, p), interpolate(v1.b, v2.a, p),
 		interpolate(v1.s, v2.s, p), interpolate(v1.t, v2.t, p)
 	};
 	return out;

@@ -45,7 +45,7 @@ extern const void tri3d_ucode_end;
 
 #define VERTICES_LOC 8
 #define RSP_DATA_SIZE (VERTICES_LOC + sizeof(VertexInfo) * 24)
-#define COMMAND_BUFFER_SIZE 1776
+#define COMMAND_BUFFER_SIZE 1600
 
 static uint32_t buffer_starts[] = {RSP_DATA_SIZE, RSP_DATA_SIZE + COMMAND_BUFFER_SIZE};
 static int current_buffer = 0;
@@ -187,8 +187,8 @@ void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexIn
 	// cp[10] = 0;
 	// cp[11] = 0;
 
-	cp[12] = /*((uint32_t) coeffs.drde << 16) |*/ (coeffs.dgde & 0xFFFF);
-	cp[13] = (uint32_t) coeffs.dbde << 16;
+	// cp[12] = ((uint32_t) coeffs.drde << 16) | (coeffs.dgde & 0xFFFF);
+	// cp[13] = (uint32_t) coeffs.dbde << 16;
 
 	// cp[14] = 0;
 	// cp[15] = 0;
@@ -246,8 +246,8 @@ fixed32 dbg(int i) {
 
 void flush_triangles() {
 	PROFILE_START(PS_LOAD, 0);
-	fprintf(stderr, "%8lX %8lX %8lX %8lX\n", *(SP_DMEM + 8), *(SP_DMEM + 8 + 1), *(SP_DMEM + 8 + 2), *(SP_DMEM + 8 + 3));
-	fprintf(stderr, "%8lX %8lX %8lX %8lX %8lX %8lX %8lX %8lX\n", dbg(0), dbg(1), dbg(2), dbg(3), dbg(4), dbg(5), dbg(6), dbg(7));
+	// fprintf(stderr, "%8lX %8lX %8lX %8lX\n", *(SP_DMEM + 8), *(SP_DMEM + 8 + 1), *(SP_DMEM + 8 + 2), *(SP_DMEM + 8 + 3));
+	// fprintf(stderr, "%8lX %8lX %8lX %8lX %8lX %8lX %8lX %8lX\n", dbg(0), dbg(1), dbg(2), dbg(3), dbg(4), dbg(5), dbg(6), dbg(7));
 	// dma_to_dmem(&coeffs, COEFFS_LOC, 128);
 	dma_to_dmem(vertex_buffer, VERTICES_LOC, sizeof(vertex_buffer));
 	dma_to_dmem(command_buffer, command_pointer, sizeof(command_buffer));

@@ -6,11 +6,12 @@ V_w equ 12
 V_r equ 16
 V_g equ 20
 V_b equ 24
+V_a equ 28
 
-V_s equ 28
-V_t equ 32
+V_s equ 32
+V_t equ 36
 
-V_size equ 36
+V_size equ 40
 
 
 C_header equ 0
