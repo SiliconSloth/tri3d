@@ -117,6 +117,14 @@
 .endmacro
 
 
+.macro LoadBase, base
+  la a0, base + Vertices + V_size * 3
+  la a1, base + Vertices + V_size * 9
+  la a2, base + Vertices + V_size * 15
+  la a3, base + Vertices + V_size * 21
+.endmacro
+
+
 .macro Load, res, addr, part, ind
   lsv res[0],  addr + part * 2 + V_size * (ind - 3)(a0)
   lsv res[2],  addr + part * 2 + V_size * ind(a0)

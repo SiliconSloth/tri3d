@@ -43,10 +43,7 @@ RSPStart:
   la t0, 0xF00
   mtc2 t0, consts[12]
 
-  la a0, Vertices + V_size * 3
-  la a1, Vertices + V_size * 9
-  la a2, Vertices + V_size * 15
-  la a3, Vertices + V_size * 21
+  LoadBase 0
 
   lw t0, RDPStartPointer(r0)
   addi t1, t0, C_size
