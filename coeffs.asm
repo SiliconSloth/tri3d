@@ -112,4 +112,6 @@ ComputeAttrImpl:
     ComputeAttr V_g, C_g_i, C_g_f, C_dgde_i, C_dgde_f, C_dgdx_i, C_dgdx_f
     ComputeAttr V_b, C_b_i, C_b_f, C_dbde_i, C_dbde_f, C_dbdx_i, C_dbdx_f
     ComputeAttr V_a, C_a_i, C_a_f, C_dade_i, C_dade_f, C_dadx_i, C_dadx_f
+    ComputeAttr V_s, C_s_i, C_s_f, C_dsde_i, C_dsde_f, C_dsdx_i, C_dsdx_f
+    ComputeAttr V_t, C_t_i, C_t_f, C_dtde_i, C_dtde_f, C_dtdx_i, C_dtdx_f
 .endmacro

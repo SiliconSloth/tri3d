@@ -98,17 +98,17 @@ C_dsde_i equ 128
 C_dtde_i equ 130
 C_dwde_i equ 132
 
-C_dsdy_i equ 138
-C_dtdy_i equ 140
-C_dwdy_i equ 142
+C_dsdy_i equ 136
+C_dtdy_i equ 138
+C_dwdy_i equ 140
 
-C_dsde_f equ 146
-C_dtde_f equ 148
-C_dwde_f equ 150
+C_dsde_f equ 144
+C_dtde_f equ 146
+C_dwde_f equ 148
 
-C_dsdy_f equ 154
-C_dtdy_f equ 156
-C_dwdy_f equ 158
+C_dsdy_f equ 152
+C_dtdy_f equ 154
+C_dwdy_f equ 156
 
 C_z_i equ 160
 C_z_f equ 162
