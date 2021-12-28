@@ -7,8 +7,6 @@
 
 .include "types.asm"
 .include "ops.asm"
-.include "coeffs.asm"
-
 
 RDPStartPointer equ 0
 RDPEndPointer equ 4
@@ -25,6 +23,8 @@ max_gap  equ 3
 y_mask   equ 4
 maj_bit  equ 5
 command  equ 6
+
+.include "coeffs.asm"
 
 
 RSPStart:
