@@ -125,6 +125,18 @@
 .endmacro
 
 
+.macro StoreBase, base
+  add t0, t8, base
+  addi t1, t0, C_size
+  addi t2, t0, C_size * 2
+  addi t3, t0, C_size * 3
+  addi t4, t0, C_size * 4
+  addi t5, t0, C_size * 5
+  addi t6, t0, C_size * 6
+  addi t7, t0, C_size * 7
+.endmacro
+
+
 .macro Load, res, addr, part, ind
   lsv res[0],  addr + part * 2 + V_size * (ind - 3)(a0)
   lsv res[2],  addr + part * 2 + V_size * ind(a0)
@@ -149,4 +161,10 @@
   ssv value[10], addr(t5)
   ssv value[12], addr(t6)
   ssv value[14], addr(t7)
+.endmacro
+
+
+.macro Store_d, addr, value
+  StoreBase addr
+  Store 0, value
 .endmacro

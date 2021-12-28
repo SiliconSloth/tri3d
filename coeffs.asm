@@ -3,7 +3,7 @@
     Store yp_a, tmp0
 .endmacro
 
-.macro DefComputeAttr, a_a, sa_i_a, sa_f_a, dade_i_a, dade_f_a, dadx_i_a, dadx_f_a
+.macro DefComputeAttr
     Load v7, 0, 0, 0
     Load v8, 0, 1, 0
     Load v9, 0, 0, 2
@@ -13,25 +13,31 @@
     LTE_cond_ii v0, zeros, v11
     Select v9, zeros, v9
     Select v10, zeros, v10
-    Store dade_i_a, v9
-    Store dade_f_a, v10
+    Store_d s2, v9
+    Store_d s3, v10
     Mul_ifif v11, v12, v2, v3, v9, v10
     Add_ifif v13, v14, v7, v8, v11, v12
     Load v11, 0, 0, 1
     Load v12, 0, 1, 1
     Sub_ifif v15, v16, v11, v12, v13, v14
     Div_ifif v11, v12, v15, v16, v4, v5, v13, v14
-    Store dadx_i_a, v11
-    Store dadx_f_a, v12
+    Store_d s4, v11
+    Store_d s5, v12
     Mul_fif v11, v12, v6, v9, v10
     Sub_ifif v9, v10, v7, v8, v11, v12
-    Store sa_i_a, v9
-    Store sa_f_a, v10
+    Store_d s0, v9
+    Store_d s1, v10
 .endmacro
 
 .macro ComputeAttr, a_a, sa_i_a, sa_f_a, dade_i_a, dade_f_a, dadx_i_a, dadx_f_a
     LoadBase a_a
-    DefComputeAttr a_a, sa_i_a, sa_f_a, dade_i_a, dade_f_a, dadx_i_a, dadx_f_a
+    la s0, sa_i_a
+    la s1, sa_f_a
+    la s2, dade_i_a
+    la s3, dade_f_a
+    la s4, dadx_i_a
+    la s5, dadx_f_a
+    DefComputeAttr
 .endmacro
 
 .macro ComputeCoeffs, tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, tmp13, tmp14, tmp15, tmp16, tmp17, tmp18, tmp19, tmp20, tmp21, tmp22, tmp23, tmp24, tmp25, tmp26
@@ -103,5 +109,5 @@
     Sub_ifif tmp4, tmp5, tmp7, tmp8, tmp9, tmp12
     ComputeAttr V_r, C_r_i, C_r_f, C_drde_i, C_drde_f, C_drdx_i, C_drdx_f
     ComputeAttr V_g, C_g_i, C_g_f, C_dgde_i, C_dgde_f, C_dgdx_i, C_dgdx_f
-    ComputeAttr V_b, C_b_i, C_b_f, C_dbde_i, C_dbde_f, C_dbdx_i, C_dbdx_f
+    //ComputeAttr V_b, C_b_i, C_b_f, C_dbde_i, C_dbde_f, C_dbdx_i, C_dbdx_f
 .endmacro
