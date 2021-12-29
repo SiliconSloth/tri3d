@@ -41,6 +41,47 @@ ComputeAttrImpl:
     la s5, dadx_f_a
 .endmacro
 
+ComputeDepthImpl:
+    Load v7, 0, 0, 0
+    Load v8, 0, 1, 0
+    Load v9, 0, 0, 2
+    Load v10, 0, 1, 2
+    Sub_ifif v11, v12, v9, v10, v7, v8
+    Div_ifif v9, v10, v11, v12, v0, v1, v13, v14
+    LTE_cond_ii v0, zeros, v11
+    Select v9, zeros, v9
+    Select v10, zeros, v10
+    Mul_ifci v11, v12, max_depth, v9, v10
+    Store_d s2, v11
+    Store_d s3, v12
+    Mul_ifif v11, v12, v2, v3, v9, v10
+    Add_ifif v13, v14, v7, v8, v11, v12
+    Load v11, 0, 0, 1
+    Load v12, 0, 1, 1
+    Sub_ifif v15, v16, v11, v12, v13, v14
+    Div_ifif v11, v12, v15, v16, v4, v5, v13, v14
+    Mul_ifci v13, v14, max_depth, v11, v12
+    Store_d s4, v13
+    Store_d s5, v14
+    Mul_fif v11, v12, v6, v9, v10
+    Sub_ifif v9, v10, v7, v8, v11, v12
+    Mul_ifci v7, v8, max_depth, v9, v10
+    Store_d s0, v7
+    Store_d s1, v8
+    jalr ra
+    nop
+
+.macro ComputeDepth, a_a, sa_i_a, sa_f_a, dade_i_a, dade_f_a, dadx_i_a, dadx_f_a
+    LoadBase a_a
+    la s0, sa_i_a
+    la s1, sa_f_a
+    la s2, dade_i_a
+    la s3, dade_f_a
+    la s4, dadx_i_a
+    jal ComputeDepthImpl
+    la s5, dadx_f_a
+.endmacro
+
 .macro ComputeCoeffs, tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, tmp13, tmp14, tmp15, tmp16, tmp17, tmp18, tmp19, tmp20, tmp21, tmp22, tmp23, tmp24, tmp25, tmp26
     Load tmp4, V_x, 0, 0
     Load tmp5, V_x, 1, 0
@@ -114,4 +155,5 @@ ComputeAttrImpl:
     ComputeAttr V_a, C_a_i, C_a_f, C_dade_i, C_dade_f, C_dadx_i, C_dadx_f
     ComputeAttr V_s, C_s_i, C_s_f, C_dsde_i, C_dsde_f, C_dsdx_i, C_dsdx_f
     ComputeAttr V_t, C_t_i, C_t_f, C_dtde_i, C_dtde_f, C_dtdx_i, C_dtdx_f
+    ComputeDepth V_z, C_z_i, C_z_f, C_dzde_i, C_dzde_f, C_dzdx_i, C_dzdx_f
 .endmacro

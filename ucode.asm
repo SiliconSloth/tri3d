@@ -15,14 +15,15 @@ Vertices equ 8
 zeros equ v30
 consts equ v31
 
-const_1  equ 0
-const_2  equ 1
-const_4  equ 2
-const_r4 equ 3
-max_gap  equ 3
-y_mask   equ 4
-maj_bit  equ 5
-command  equ 6
+const_1   equ 0
+const_2   equ 1
+const_4   equ 2
+const_r4  equ 3
+max_gap   equ 3
+y_mask    equ 4
+maj_bit   equ 5
+command   equ 6
+max_depth equ 7
 
 .include "coeffs.asm"
 
@@ -42,6 +43,8 @@ RSPStart:
   mtc2 t0, consts[10]
   la t0, 0xF00
   mtc2 t0, consts[12]
+  la t0, 0x7C00
+  mtc2 t0, consts[14]
 
   LoadBase 0
 

@@ -47,7 +47,7 @@ extern const void tri3d_ucode_end;
 #define RSP_DATA_SIZE (VERTICES_LOC + sizeof(VertexInfo) * 24)
 #define COMMAND_BUFFER_SIZE 1600
 
-static uint32_t buffer_starts[] = {RSP_DATA_SIZE, RSP_DATA_SIZE + COMMAND_BUFFER_SIZE};
+static uint32_t buffer_starts[] = {RSP_DATA_SIZE};
 static int current_buffer = 0;
 static uint32_t command_pointer;
 
@@ -127,7 +127,7 @@ void swap_command_buffers() {
 	run_blocking();
 	rdp_busy = true;
 
-	current_buffer = 1 - current_buffer;
+	// current_buffer = 1 - current_buffer;
 	command_pointer = buffer_starts[current_buffer];
 }
 
@@ -221,11 +221,11 @@ void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexIn
 
 	cp += 16;
 
-	cp[0] = coeffs.z;
-	cp[1] = coeffs.dzdx;
+	// cp[0] = coeffs.z;
+	// cp[1] = coeffs.dzdx;
 
-	cp[2] = coeffs.dzde;
-	cp[3] = 0;
+	// cp[2] = coeffs.dzde;
+	// cp[3] = 0;
 
 	vertex_buffer[triangle_ind * 3] = v1;
 	vertex_buffer[triangle_ind * 3 + 1] = v2;
