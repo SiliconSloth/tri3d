@@ -149,83 +149,10 @@ static uint32_t command_buffer[8][COMMAND_SIZE];
 static VertexInfo vertex_buffer[24];
 static size_t triangle_ind = 0;
 
-void load_triangle(TriangleCoeffs coeffs, VertexInfo v1, VertexInfo v2, VertexInfo v3) {
+void load_triangle(VertexInfo v1, VertexInfo v2, VertexInfo v3) {
 	swap_if_full(176 * 8);
 
 	PROFILE_START(PS_PACK, 0);
-	uint32_t *cp = command_buffer[triangle_ind];
-
-	// cp[0] = 0xF000000 | (coeffs.major << 23) | ((uint32_t) coeffs.yl >> 14);
-	// cp[1] = ((coeffs.ym & 0xFFFFC000) << 2) | ((uint32_t) coeffs.yh >> 14);
-
-	// cp[2] = coeffs.xl;
-	// cp[3] = coeffs.dxldy;
-
-	// cp[4] = coeffs.xh;
-	// cp[5] = coeffs.dxhdy;
-
-	// cp[6] = coeffs.xm;
-	// cp[7] = coeffs.dxmdy;
-
-	cp += 8;
-
-	// cp[0] = (coeffs.red & 0xFFFF0000) | ((uint32_t) coeffs.green >> 16);
-	// cp[1] = coeffs.blue & 0xFFFF0000;
-
-	// cp[2] = (coeffs.drdx & 0xFFFF0000) | ((uint32_t) coeffs.dgdx >> 16);
-	// cp[3] = coeffs.dbdx & 0xFFFF0000;
-
-	// cp[4] = ((uint32_t) coeffs.red << 16) | ((uint32_t) coeffs.green & 0xFFFF);
-	// cp[5] = (uint32_t) coeffs.blue << 16;
-
-	// cp[6] = ((uint32_t) coeffs.drdx << 16) | ((uint32_t) coeffs.dgdx & 0xFFFF);
-	// cp[7] = (uint32_t) coeffs.dbdx << 16;
-
-	// cp[8] = (coeffs.drde & 0xFFFF0000) | ((uint32_t) coeffs.dgde >> 16);
-	// cp[9] = coeffs.dbde & 0xFFFF0000;
-
-	// cp[10] = 0;
-	// cp[11] = 0;
-
-	// cp[12] = ((uint32_t) coeffs.drde << 16) | (coeffs.dgde & 0xFFFF);
-	// cp[13] = (uint32_t) coeffs.dbde << 16;
-
-	// cp[14] = 0;
-	// cp[15] = 0;
-
-	cp += 16;
-
-	// cp[0] = (coeffs.s & 0xFFFF0000) | ((uint32_t) coeffs.t >> 16);
-	// cp[1] = coeffs.w & 0xFFFF0000;
-
-	// cp[2] = (coeffs.dsdx & 0xFFFF0000) | ((uint32_t) coeffs.dtdx >> 16);
-	// cp[3] = coeffs.dwdx & 0xFFFF0000;
-
-	// cp[4] = ((uint32_t) coeffs.s << 16) | ((uint32_t) coeffs.t & 0xFFFF);
-	// cp[5] = (uint32_t) coeffs.w << 16;
-
-	// cp[6] = ((uint32_t) coeffs.dsdx << 16) | ((uint32_t) coeffs.dtdx & 0xFFFF);
-	// cp[7] = (uint32_t) coeffs.dwdx << 16;
-
-	// cp[8] = (coeffs.dsde & 0xFFFF0000) | ((uint32_t) coeffs.dtde >> 16);
-	// cp[9] = coeffs.dwde & 0xFFFF0000;
-
-	// cp[10] = 0;
-	// cp[11] = 0;
-
-	// cp[12] = ((uint32_t) coeffs.dsde << 16) | (coeffs.dtde & 0xFFFF);
-	// cp[13] = (uint32_t) coeffs.dwde << 16;
-
-	// cp[14] = 0;
-	// cp[15] = 0;
-
-	cp += 16;
-
-	// cp[0] = coeffs.z;
-	// cp[1] = coeffs.dzdx;
-
-	// cp[2] = coeffs.dzde;
-	// cp[3] = 0;
 
 	vertex_buffer[triangle_ind * 3] = v1;
 	vertex_buffer[triangle_ind * 3 + 1] = v2;
@@ -248,12 +175,10 @@ void flush_triangles() {
 	PROFILE_START(PS_LOAD, 0);
 	// fprintf(stderr, "%8lX %8lX %8lX %8lX\n", *(SP_DMEM + 8), *(SP_DMEM + 8 + 1), *(SP_DMEM + 8 + 2), *(SP_DMEM + 8 + 3));
 	// fprintf(stderr, "%8lX %8lX %8lX %8lX %8lX %8lX %8lX %8lX\n", dbg(0), dbg(1), dbg(2), dbg(3), dbg(4), dbg(5), dbg(6), dbg(7));
-	// dma_to_dmem(&coeffs, COEFFS_LOC, 128);
 	dma_to_dmem(vertex_buffer, VERTICES_LOC, sizeof(vertex_buffer));
-	dma_to_dmem(command_buffer, command_pointer, sizeof(command_buffer));
 
 	command_pointer += sizeof(command_buffer[0]) * triangle_ind;
 	triangle_ind = 0;
-	swap_command_buffers();
+	// swap_command_buffers();
 	PROFILE_STOP(PS_LOAD, 0);
 }
