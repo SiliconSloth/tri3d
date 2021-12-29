@@ -156,4 +156,5 @@ ComputeDepthImpl:
     ComputeAttr V_s, C_s_i, C_s_f, C_dsde_i, C_dsde_f, C_dsdx_i, C_dsdx_f
     ComputeAttr V_t, C_t_i, C_t_f, C_dtde_i, C_dtde_f, C_dtdx_i, C_dtdx_f
     ComputeDepth V_z, C_z_i, C_z_f, C_dzde_i, C_dzde_f, C_dzdx_i, C_dzdx_f
+    ComputeDepth V_w, C_w_i, C_w_f, C_dwde_i, C_dwde_f, C_dwdx_i, C_dwdx_f
 .endmacro

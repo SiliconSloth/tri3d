@@ -63,16 +63,12 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo *v1, Verte
 	compute_gradients(y1, v1->g, y2, v2->g, y3, v3->g, x2, x_mid, &dgde, &dgdx);
 	compute_gradients(y1, v1->b, y2, v2->b, y3, v3->b, x2, x_mid, &dbde, &dbdx);
 
-	fixed32 iw1 = DIV_FX32(FIXED32(1), v1->w);
-	fixed32 iw2 = DIV_FX32(FIXED32(1), v2->w);
-	fixed32 iw3 = DIV_FX32(FIXED32(1), v3->w);
-
 	fixed32 dsde, dtde;
 	fixed32 dsdx, dtdx;
 	fixed32 dwde, dwdx;
 	compute_gradients(y1, v1->s, y2, v2->s, y3, v3->s, x2, x_mid, &dsde, &dsdx);
 	compute_gradients(y1, v1->t, y2, v2->t, y3, v3->t, x2, x_mid, &dtde, &dtdx);
-	compute_gradients(y1, iw1, y2, iw2, y3, iw3, x2, x_mid, &dwde, &dwdx);
+	compute_gradients(y1, v1->w, y2, v2->w, y3, v3->w, x2, x_mid, &dwde, &dwdx);
 
 	#define DEPTH_MUL 0x7C00
 
@@ -83,7 +79,7 @@ void compute_triangle_coefficients(TriangleCoeffs *coeffs, VertexInfo *v1, Verte
 	dzde *= DEPTH_MUL;
 	dzdx *= DEPTH_MUL;
 
-	fixed32 w = iw1 - MUL_FX32(y1_frac, dwde);
+	fixed32 w = v1->w - MUL_FX32(y1_frac, dwde);
 	dwde *= DEPTH_MUL;
 	dwdx *= DEPTH_MUL;
 
@@ -147,6 +143,7 @@ void normalize_vertex(VertexInfo *v) {
 
 	v->s = DIV_FX32(v->s, v->w);
 	v->t = DIV_FX32(v->t, v->w);
+	v->w = DIV_FX32(FIXED32(1), v->w);
 }
 
 fixed32 interpolate(fixed32 a, fixed32 b, fixed32 p) {
