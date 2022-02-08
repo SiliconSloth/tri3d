@@ -14,7 +14,7 @@
 
 extern uint16_t *__safe_buffer[];
 
-static uint16_t z_buffer[320 * 240];// __attribute__ ((aligned (8)));
+static uint16_t z_buffer[320 * 240] __attribute__ ((aligned (64)));
 
 #define FOV 60
 #define NEAR 4.0
