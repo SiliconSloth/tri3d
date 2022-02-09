@@ -46,6 +46,7 @@ $(BUILDDIR)/ucode.o: $(BUILDDIR)/ucode.bin
 		--redefine-sym _binary_$(BUILDDIR)_ucode_bin_start=tri3d_ucode_start \
 		--redefine-sym _binary_$(BUILDDIR)_ucode_bin_end=tri3d_ucode_end \
 		--strip-symbol _binary_$(BUILDDIR)_ucode_bin_size \
+		--add-symbol tri3d_ucode_entrypoint=0x$$(grep "rspstart" $(BUILDDIR)/ucode_sym.txt | cut -b-8) \
 		--add-symbol tri3d_ucode_data_start=.data:0x$$(grep "rdpbuffer" $(BUILDDIR)/ucode_sym.txt | cut -b-8)
 
 $(BUILDDIR)/ucode.bin: ucode.asm types.asm ops.asm coeffs.asm

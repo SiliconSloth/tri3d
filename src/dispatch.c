@@ -43,6 +43,17 @@ extern const void tri3d_ucode_start;
 extern const void tri3d_ucode_data_start;
 extern const void tri3d_ucode_end;
 
+extern const void tri3d_ucode_entrypoint;
+
+static rsp_ucode_t ucode = {
+	(void *) &tri3d_ucode_start,
+	(void *) &tri3d_ucode_data_start,
+	NULL,
+	(void *) 8,
+	"tri3d",
+	(uint32_t) &tri3d_ucode_entrypoint
+};
+
 #define VERTICES_LOC 8
 #define RSP_DATA_SIZE (VERTICES_LOC + sizeof(VertexInfo) * 24)
 #define COMMAND_BUFFER_SIZE 1600
@@ -94,8 +105,7 @@ void run_blocking() {
 }
 
 void init_ucode() {
-    uint32_t ucode_code_size = (uint32_t) &tri3d_ucode_data_start - (uint32_t) &tri3d_ucode_start;
-    rsp_load_code((void *) &tri3d_ucode_start, ucode_code_size, 0);
+	rsp_load(&ucode);
 }
 
 void run_frame_setup(void *color_image, void *z_image, void *texture, void *palette) {
